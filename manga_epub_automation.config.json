@@ -1,0 +1,82 @@
+﻿{
+  "version": 2,
+  "pipeline": {
+    "SourceDirSuffixToSkip": "-upscaled",
+    "OutputDirSuffix": "-upscaled",
+    "EpubOutputDirSuffix": "-output",
+    "OutputFilenamePattern": "%filename%-upscaled"
+  },
+  "manga": {
+    "SelectedTabIndex": 1,
+    "OverwriteExistingFiles": false,
+    "ModeScaleSelected": true,
+    "ModeWidthSelected": false,
+    "ModeHeightSelected": false,
+    "ModeFitToDisplaySelected": false,
+    "UpscaleScaleFactor": 2,
+    "OutputFormat": "webp",
+    "LossyCompressionQuality": 80,
+    "WorkflowOverrides": {}
+  },
+  "kcc": {
+    "CliOptions": {
+      "DeviceProfile": "KS",
+      "OutputFormat": "EPUB",
+      "NoKepub": true,
+      "DisableProcessing": true,
+      "ForceColor": true,
+      "MangaStyle": false,
+      "HighQualityMagnification": false,
+      "TwoPanelView": false,
+      "WebtoonMode": false,
+      "TargetSizeMB": null,
+      "LegacyPdfExtract": false,
+      "UpscaleSmallImages": false,
+      "StretchToResolution": false,
+      "SplitterMode": null,
+      "Gamma": null,
+      "CroppingMode": null,
+      "CroppingPower": null,
+      "PreserveMarginPercent": null,
+      "CroppingMinimumRatio": null,
+      "InterPanelCropMode": null,
+      "ForceBlackBorders": false,
+      "ForceWhiteBorders": false,
+      "ForcePng": false,
+      "MozJpeg": false,
+      "JpegQuality": null,
+      "MaximizeStrips": false,
+      "BatchSplitMode": null,
+      "MetadataTitleMode": null,
+      "SpreadShift": false,
+      "NoRotateSpreads": false,
+      "RotateFirstSpread": false,
+      "AutoLevel": false,
+      "DisableAutoContrast": false,
+      "ColorAutoContrast": false,
+      "FileFusion": false,
+      "EraseRainbow": false,
+      "DeleteSourceAfterPack": false,
+      "CustomWidth": null,
+      "CustomHeight": null,
+      "AdditionalArgs": []
+    },
+    "UnicodeStaging": {
+      "Enabled": true,
+      "StagePrefix": "manga_epub_automation_kcc_stage_",
+      "SafeTitleFallback": "manga_epub_automation_book",
+      "SafeAuthorFallback": "pipeline"
+    },
+    "MetadataRewrite": {
+      "Enabled": true
+    },
+    "BaseArgs": []
+  },
+  "merge": {
+    "Language": "zh",
+    "DescriptionHeader": "选集 包含:",
+    "IncludeOrderInDescription": true,
+    "MetadataContributor": "manga-epub-automation-merge"
+  }
+}
+

@@ -1,0 +1,18 @@
+﻿{
+  "version": 1,
+  "paths": {
+    "python_exe": "<path-to-python.exe>",
+    "backend_script": "<path-to-run_upscale.py>",
+    "models_dir": "<path-to-models-dir>",
+    "kcc_exe": "<path-to-kcc-exe>",
+    "merge_script": "<path-to-MergeEpubByOrder.py>"
+  },
+  "progress": {
+    "enabled": true,
+    "refresh_seconds": 1,
+    "eta_min_samples": 8,
+    "noninteractive_log_interval_seconds": 10
+  }
+}
+
+

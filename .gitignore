@@ -1,0 +1,31 @@
+﻿# Local/private configuration
+manga_epub_automation.deps.json
+manga_epub_automation.runtime.json
+
+# Runtime artifacts
+logs/
+*.log
+
+# Third-party binaries
+kcc_c2e_9.4.3.exe
+
+# Generated outputs
+*.epub
+**/*-upscaled/
+**/*-output/
+**/.manga_epub_automation_merge_manifest.json
+**/.manga_epub_automation_merge_order.json
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+
