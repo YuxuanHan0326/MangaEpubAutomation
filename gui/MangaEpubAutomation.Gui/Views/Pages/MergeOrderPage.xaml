@@ -1,0 +1,56 @@
+<Page x:Class="MangaEpubAutomation.Gui.Views.Pages.MergeOrderPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      mc:Ignorable="d"
+      Title="MergeOrder">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Margin="2,0,0,10"
+                   FontSize="18"
+                   FontWeight="SemiBold"
+                   Text="Merge Order" />
+
+        <ui:Card Grid.Row="1" Margin="0,0,0,10" Padding="14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Order File" />
+            <TextBox Grid.Column="1" Margin="0,0,8,0" Text="{Binding MergeOrderFilePath, UpdateSourceTrigger=PropertyChanged}" />
+            <ui:Button Grid.Column="2" Margin="0,0,0,0" Command="{Binding BrowseMergeOrderFilePathCommand}" Content="Browse" />
+        </Grid>
+    </ui:Card>
+
+    <ui:Card Grid.Row="2" Margin="0,0,0,10" Padding="14">
+        <WrapPanel>
+            <ui:Button Margin="0,0,10,8" Command="{Binding LoadMergeOrderCommand}" Content="Load" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding SaveMergeOrderCommand}" Content="Save" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding GenerateMergeOrderTemplateCommand}" Content="Generate Template" />
+            <TextBox Width="260"
+                     Margin="0,0,8,8"
+                     VerticalAlignment="Center"
+                     Text="{Binding NewMergeOrderEntry, UpdateSourceTrigger=PropertyChanged}" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding AddMergeOrderEntryCommand}" Content="Add" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding RemoveMergeOrderEntryCommand}" Content="Remove" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding MoveMergeOrderUpCommand}" Content="Move Up" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding MoveMergeOrderDownCommand}" Content="Move Down" />
+        </WrapPanel>
+    </ui:Card>
+
+        <ui:Card Grid.Row="3" Padding="14">
+            <ListBox ItemsSource="{Binding MergeOrderChapters}" SelectedItem="{Binding SelectedMergeOrderEntry}" />
+        </ui:Card>
+    </Grid>
+</Page>

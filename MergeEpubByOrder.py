@@ -50,14 +50,17 @@ class MergePlan:
 
 
 def _ns(tag: str, ns: str) -> str:
+    """Build a namespaced XML tag string."""
     return f"{{{ns}}}{tag}"
 
 
 def _local(tag: str) -> str:
+    """Extract local name from an XML tag."""
     return tag.split("}", 1)[1] if "}" in tag else tag
 
 
 def _read_text(zf: zipfile.ZipFile, name: str) -> str:
+    """Read a UTF-8 text entry from a zip, raising MergeError when missing."""
     try:
         return zf.read(name).decode("utf-8")
     except KeyError as exc:
@@ -65,6 +68,7 @@ def _read_text(zf: zipfile.ZipFile, name: str) -> str:
 
 
 def _find_rootfile_path(container_xml: str) -> str:
+    """Resolve OPF path from EPUB container.xml."""
     root = ET.fromstring(container_xml)
     rootfile = root.find(f".//{{{CONT_NS}}}rootfile")
     if rootfile is None:
@@ -78,14 +82,17 @@ def _find_rootfile_path(container_xml: str) -> str:
 
 
 def _norm(path: str) -> str:
+    """Normalize to stable POSIX-style relative path."""
     return posixpath.normpath(path.replace("\\", "/"))
 
 
 def _safe_id(raw: str) -> str:
+    """Sanitize id values so merged OPF ids stay XML-safe."""
     return re.sub(r"[^A-Za-z0-9_.-]", "_", raw) or "id"
 
 
 def _first_existing_href(old_to_new_href: Dict[str, str], keys: List[str]) -> Optional[str]:
+    """Return the first mapped href from candidate keys."""
     for key in keys:
         if key in old_to_new_href:
             return old_to_new_href[key]
@@ -93,6 +100,8 @@ def _first_existing_href(old_to_new_href: Dict[str, str], keys: List[str]) -> Op
 
 
 def _load_plan(path: str) -> MergePlan:
+    # Plan json is produced by the PowerShell pipeline and defines
+    # both ordering and metadata for the merged anthology.
     with open(path, "r", encoding="utf-8") as fp:
         raw = json.load(fp)
 
@@ -131,6 +140,7 @@ def _load_plan(path: str) -> MergePlan:
 
 
 def _write_container_xml(out: zipfile.ZipFile) -> None:
+    """Write EPUB META-INF/container.xml that points to merged content.opf."""
     container = ET.Element(_ns("container", CONT_NS), attrib={"version": "1.0"})
     rootfiles = ET.SubElement(container, _ns("rootfiles", CONT_NS))
     ET.SubElement(
@@ -151,6 +161,7 @@ def _write_toc_ncx(
     title: str,
     navpoints: List[Tuple[str, str]],
 ) -> None:
+    """Create a flat NCX table of contents from chapter navpoints."""
     ncx = ET.Element(_ns("ncx", NCX_NS), attrib={"version": "2005-1"})
     head = ET.SubElement(ncx, _ns("head", NCX_NS))
     ET.SubElement(head, _ns("meta", NCX_NS), attrib={"name": "dtb:uid", "content": uid})
@@ -180,6 +191,7 @@ def _write_content_opf(
     spine_ids: List[str],
     cover_image_href: Optional[str],
 ) -> None:
+    """Write merged OPF metadata, manifest, spine, and optional cover guide."""
     package = ET.Element(
         _ns("package", OPF_NS),
         attrib={
@@ -242,6 +254,7 @@ def _write_content_opf(
 
 
 def _write_cover_xhtml(out: zipfile.ZipFile, cover_href: str) -> None:
+    """Write a simple XHTML cover page referencing the selected cover image."""
     html = f"""<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <html xmlns=\"http://www.w3.org/1999/xhtml\">
   <head><title>Cover</title></head>
@@ -254,6 +267,7 @@ def _write_cover_xhtml(out: zipfile.ZipFile, cover_href: str) -> None:
 
 
 def merge(plan: MergePlan) -> None:
+    """Merge chapter EPUBs into one EPUB2 archive based on plan order."""
     out_path = Path(plan.output_epub_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -271,6 +285,7 @@ def merge(plan: MergePlan) -> None:
 
     try:
         with zipfile.ZipFile(tmp_path, "w", allowZip64=True) as out:
+            # EPUB requirement: mimetype must be first and uncompressed.
             mime_info = zipfile.ZipInfo("mimetype")
             mime_info.compress_type = zipfile.ZIP_STORED
             out.writestr(mime_info, b"application/epub+zip")
@@ -302,6 +317,8 @@ def merge(plan: MergePlan) -> None:
                     if manifest is None or spine is None:
                         raise MergeError(f"invalid opf in {epub_path}: missing manifest/spine")
 
+                    # Namespace each source book under "<index>/" to avoid
+                    # href/id collisions between different chapter EPUBs.
                     chapter_prefix = f"{chapter_index}/"
                     old_to_new_id: Dict[str, str] = {}
                     old_to_new_href: Dict[str, str] = {}
@@ -355,6 +372,7 @@ def merge(plan: MergePlan) -> None:
                     if first_spine_href is None:
                         raise MergeError(f"cannot resolve first spine item for {epub_path}")
 
+                    # Each chapter contributes one top-level TOC entry.
                     navpoints.append((chapter.chapter_name, first_spine_href))
 
                     if cover_href is None and source_cover_id:
@@ -373,6 +391,7 @@ def merge(plan: MergePlan) -> None:
                 cover_image_href=cover_href,
             )
 
+        # Atomic replace prevents leaving a partial EPUB on failure.
         os.replace(tmp_path, out_path)
     except Exception:
         if tmp_path.exists():
@@ -384,12 +403,14 @@ def merge(plan: MergePlan) -> None:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
+    """Define CLI interface for the merge helper."""
     p = argparse.ArgumentParser(description="Merge ordered chapter EPUBs into one EPUB2 file")
     p.add_argument("--plan", required=True, help="Path to merge plan JSON")
     return p
 
 
 def main(argv: List[str]) -> int:
+    """CLI entrypoint with stable exit codes for pipeline integration."""
     parser = build_arg_parser()
     args = parser.parse_args(argv)
 

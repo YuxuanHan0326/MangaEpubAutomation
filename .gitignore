@@ -1,12 +1,14 @@
-﻿# Local/private configuration
+# Local/private configuration
 manga_epub_automation.deps.json
 manga_epub_automation.runtime.json
 
 # Runtime artifacts
 logs/
 *.log
+*.tmp
+*.bak
 
-# Third-party binaries
+# Third-party binaries (user-provided)
 kcc_c2e_9.4.3.exe
 
 # Generated outputs
@@ -22,10 +24,18 @@ __pycache__/
 *.pyo
 *.pyd
 
+# .NET / GUI artifacts
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+
 # Editor / OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-
-
+Desktop.ini

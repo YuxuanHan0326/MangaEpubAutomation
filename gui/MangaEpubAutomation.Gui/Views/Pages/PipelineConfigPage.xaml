@@ -1,0 +1,294 @@
+<Page x:Class="MangaEpubAutomation.Gui.Views.Pages.PipelineConfigPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:behaviors="clr-namespace:MangaEpubAutomation.Gui.Behaviors"
+      mc:Ignorable="d"
+      Title="PipelineConfig">
+    <Grid Margin="12">
+        <ui:DynamicScrollViewer VerticalScrollBarVisibility="Auto"
+                                IsScrollSpillEnabled="True">
+            <StackPanel>
+                <TextBlock Margin="2,0,0,10"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Text="Pipeline Config" />
+
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <WrapPanel>
+                        <ui:Button Margin="0,0,10,8" Command="{Binding LoadPipelineConfigCommand}" Content="Load Form" />
+                        <ui:Button Margin="0,0,10,8" Command="{Binding SavePipelineConfigCommand}" Content="Save Form" />
+                        <ui:Button Margin="0,0,10,8" Command="{Binding InitPipelineConfigCommand}" Content="Init Via Script" />
+                    </WrapPanel>
+                </ui:Card>
+
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Pipeline Naming" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="SourceDirSuffixToSkip" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgSourceDirSuffixToSkip, UpdateSourceTrigger=PropertyChanged}" ToolTip="Folder suffix to ignore when scanning source candidates." />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="OutputDirSuffix" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgOutputDirSuffix, UpdateSourceTrigger=PropertyChanged}" ToolTip="Suffix appended to generated upscale image folder." />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="EpubOutputDirSuffix" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgEpubOutputDirSuffix, UpdateSourceTrigger=PropertyChanged}" ToolTip="Suffix for EPUB output folder." />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="OutputFilenamePattern" />
+                            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgOutputFilenamePattern, UpdateSourceTrigger=PropertyChanged}" ToolTip="Filename template used by upscale output." />
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Manga Upscale Settings" />
+                        <WrapPanel Margin="0,0,0,8">
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgOverwriteExistingFiles}" Content="OverwriteExistingFiles" ToolTip="If enabled, existing output images can be overwritten." />
+                        </WrapPanel>
+                        <WrapPanel Margin="0,0,0,8">
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="UpscaleScaleFactor" />
+                            <TextBox Width="100"
+                                     Text="{Binding CfgUpscaleScaleFactor, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Upscale factor used in config."
+                                     behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
+                                     behaviors:NumericTextBoxWheelBehavior.Minimum="1"
+                                     behaviors:NumericTextBoxWheelBehavior.Maximum="4" />
+                            <TextBlock Width="120" Margin="20,0,0,0" VerticalAlignment="Center" Text="OutputFormat" />
+                            <TextBox Width="120" Text="{Binding CfgOutputFormat, UpdateSourceTrigger=PropertyChanged}" ToolTip="Output image format (webp/png/jpeg/avif)." />
+                        </WrapPanel>
+                        <WrapPanel>
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="LossyCompressionQuality" />
+                            <TextBox Width="100"
+                                     Text="{Binding CfgLossyCompressionQuality, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Lossy compression quality from 1 to 100."
+                                     behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
+                                     behaviors:NumericTextBoxWheelBehavior.Minimum="1"
+                                     behaviors:NumericTextBoxWheelBehavior.Maximum="100" />
+                        </WrapPanel>
+                    </StackPanel>
+                </ui:Card>
+
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="KCC Main (official)" />
+                        <WrapPanel Margin="0,0,0,8">
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="Device profile (--profile)" />
+                            <TextBox Width="140"
+                                     Text="{Binding CfgKccDeviceProfile, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Device profile from KCC --help (for example KS)." />
+                            <TextBlock Width="180" Margin="20,0,0,0" VerticalAlignment="Center" Text="Output format (--format)" />
+                            <TextBox Width="120"
+                                     Text="{Binding CfgKccOutputFormat, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Output format (Auto/MOBI/EPUB/CBZ/KFX/MOBI+EPUB/PDF)." />
+                        </WrapPanel>
+                        <WrapPanel Margin="0,0,0,8">
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="Target size MB (--targetsize)" />
+                            <TextBox Width="140"
+                                     Text="{Binding CfgKccTargetSizeMb, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Maximal output size in MB. Leave empty to follow KCC defaults." />
+                        </WrapPanel>
+                        <WrapPanel>
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccMangaStyle}" Content="Manga style (--manga-style)" ToolTip="Right-to-left reading and splitting." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccWebtoonMode}" Content="Webtoon mode (--webtoon)" ToolTip="Webtoon processing mode." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccHighQualityMagnification}" Content="Try HQ magnification (--hq)" ToolTip="Try to increase magnification quality." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccTwoPanelView}" Content="Two-panel view (--two-panel)" ToolTip="Display two not four panels in Panel View mode." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccNoKepub}" Content="No KEPUB extension (--nokepub)" ToolTip="If output is EPUB, use .epub instead of .kepub.epub." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccDisableProcessing}" Content="Disable processing (--noprocessing)" ToolTip="Do not modify image and ignore profile/processing options." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceColor}" Content="Color mode (--forcecolor)" ToolTip="Do not convert images to grayscale." />
+                        </WrapPanel>
+                    </StackPanel>
+                </ui:Card>
+
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="KCC Processing (official)" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="260" />
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="260" />
+                                <ColumnDefinition Width="220" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Double-page parser (--splitter)" />
+                            <ComboBox Grid.Row="0"
+                                      Grid.Column="1"
+                                      Margin="0,4,16,4"
+                                      SelectedValuePath="Tag"
+                                      SelectedValue="{Binding CfgKccSplitterMode}"
+                                      ToolTip="Double page parsing mode: 0 Split, 1 Rotate, 2 Both. Default follows KCC config.">
+                                <ComboBoxItem Tag="-1" Content="Default (unset)" />
+                                <ComboBoxItem Tag="0" Content="Split" />
+                                <ComboBoxItem Tag="1" Content="Rotate" />
+                                <ComboBoxItem Tag="2" Content="Both" />
+                            </ComboBox>
+
+                            <TextBlock Grid.Row="0" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="Cropping mode (--cropping)" />
+                            <ComboBox Grid.Row="0"
+                                      Grid.Column="3"
+                                      Margin="0,4,0,4"
+                                      SelectedValuePath="Tag"
+                                      SelectedValue="{Binding CfgKccCroppingMode}"
+                                      ToolTip="Cropping mode: 0 Disabled, 1 Margins, 2 Margins + page numbers.">
+                                <ComboBoxItem Tag="-1" Content="Default (unset)" />
+                                <ComboBoxItem Tag="0" Content="Disabled" />
+                                <ComboBoxItem Tag="1" Content="Margins" />
+                                <ComboBoxItem Tag="2" Content="Margins + page numbers" />
+                            </ComboBox>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Gamma (--gamma)" />
+                            <TextBox Grid.Row="1"
+                                     Grid.Column="1"
+                                     Margin="0,4,16,4"
+                                     Text="{Binding CfgKccGamma, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Auto or numeric gamma value." />
+
+                            <TextBlock Grid.Row="1" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="Inter-panel crop (--interpanelcrop)" />
+                            <ComboBox Grid.Row="1"
+                                      Grid.Column="3"
+                                      Margin="0,4,0,4"
+                                      SelectedValuePath="Tag"
+                                      SelectedValue="{Binding CfgKccInterPanelCropMode}"
+                                      ToolTip="Crop empty inter-panel sections: 0 Disabled, 1 Horizontal, 2 Both directions.">
+                                <ComboBoxItem Tag="-1" Content="Default (unset)" />
+                                <ComboBoxItem Tag="0" Content="Disabled" />
+                                <ComboBoxItem Tag="1" Content="Horizontally" />
+                                <ComboBoxItem Tag="2" Content="Both" />
+                            </ComboBox>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Cropping power (--croppingpower)" />
+                            <TextBox Grid.Row="2"
+                                     Grid.Column="1"
+                                     Margin="0,4,16,4"
+                                     Text="{Binding CfgKccCroppingPower, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Cropping power. Leave empty to follow KCC default (1.0)." />
+
+                            <TextBlock Grid.Row="2" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="Preserve margin % (--preservemargin)" />
+                            <TextBox Grid.Row="2"
+                                     Grid.Column="3"
+                                     Margin="0,4,0,4"
+                                     Text="{Binding CfgKccPreserveMarginPercent, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="After crop calculation, add back this percentage margin." />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Cropping min ratio (--croppingminimum)" />
+                            <TextBox Grid.Row="3"
+                                     Grid.Column="1"
+                                     Margin="0,4,16,4"
+                                     Text="{Binding CfgKccCroppingMinimumRatio, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Minimum cropped area ratio. Leave empty for default." />
+
+                            <TextBlock Grid.Row="3" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="JPEG quality (--jpeg-quality)" />
+                            <TextBox Grid.Row="3" Grid.Column="3" Margin="0,4,0,4" Text="{Binding CfgKccJpegQuality, UpdateSourceTrigger=PropertyChanged}" ToolTip="0-95. Leave empty for KCC default." />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Image output mode" />
+                            <ComboBox Grid.Row="4"
+                                      Grid.Column="1"
+                                      Margin="0,4,16,4"
+                                      SelectedValuePath="Tag"
+                                      SelectedValue="{Binding CfgKccImageOutputMode}"
+                                      ToolTip="Image encoding mode used by KCC output files.">
+                                <ComboBoxItem Tag="0" Content="JPEG/Auto (default)" />
+                                <ComboBoxItem Tag="1" Content="PNG (--forcepng)" />
+                                <ComboBoxItem Tag="2" Content="mozJPEG (--mozjpeg)" />
+                            </ComboBox>
+                        </Grid>
+                        <WrapPanel Margin="0,8,0,0">
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccUpscaleSmallImages}" Content="Resize small images (--upscale)" ToolTip="Resize images smaller than device resolution." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccStretchToResolution}" Content="Stretch to resolution (--stretch)" ToolTip="Stretch images to device resolution." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceBlackBorders}" Content="Force black borders (--blackborders)" ToolTip="Disable autodetection and force black borders." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceWhiteBorders}" Content="Force white borders (--whiteborders)" ToolTip="Disable autodetection and force white borders." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccMaximizeStrips}" Content="1x4 to 2x2 strips (--maximizestrips)" ToolTip="Turn 1x4 strips into 2x2 strips." />
+                        </WrapPanel>
+                    </StackPanel>
+                </ui:Card>
+
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="KCC Post-processing (official)" />
+                        <WrapPanel Margin="0,8,0,0">
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccSpreadShift}" Content="Spread shift (--spreadshift)" ToolTip="Shift first page to opposite side in landscape for spread alignment." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccNoRotateSpreads}" Content="No rotate spreads (--norotate)" ToolTip="Do not rotate double-page spreads when splitter is enabled." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccRotateFirstSpread}" Content="Rotate first spread (--rotatefirst)" ToolTip="Put rotated 2-page spread first in splitter mode." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccAutoLevel}" Content="Extreme black point (--autolevel)" ToolTip="Set most common dark pixel value as black point." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccDisableAutoContrast}" Content="Disable autocontrast (--noautocontrast)" ToolTip="Disable autocontrast processing." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccColorAutoContrast}" Content="Color autocontrast (--colorautocontrast)" ToolTip="Apply autocontrast to color pages too." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccEraseRainbow}" Content="Rainbow eraser (--eraserainbow)" ToolTip="Attenuate interfering frequencies for color e-ink rainbow effect." />
+                        </WrapPanel>
+                    </StackPanel>
+                </ui:Card>
+
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Merge Metadata" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Language" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeLanguage, UpdateSourceTrigger=PropertyChanged}" ToolTip="Language metadata for merged EPUB." />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="DescriptionHeader" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeDescriptionHeader, UpdateSourceTrigger=PropertyChanged}" ToolTip="Description prefix used when building merged EPUB metadata." />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="MetadataContributor" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeMetadataContributor, UpdateSourceTrigger=PropertyChanged}" ToolTip="Contributor metadata written by merge stage." />
+
+                            <CheckBox Grid.Row="3" Grid.Column="1" Margin="0,8,0,0" IsChecked="{Binding CfgMergeIncludeOrderInDescription}" Content="IncludeOrderInDescription" ToolTip="Include chapter order values in merged EPUB description." />
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <Expander Header="Advanced JSON Editor" IsExpanded="False">
+                    <ui:Card Margin="0,8,0,0" Padding="14">
+                        <StackPanel>
+                            <WrapPanel>
+                                <ui:Button Margin="0,0,10,8" Command="{Binding LoadPipelineConfigCommand}" Content="Reload JSON" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding SavePipelineConfigRawJsonCommand}" Content="Save JSON Raw" />
+                            </WrapPanel>
+                            <TextBox Margin="0,8,0,0"
+                                     AcceptsReturn="True"
+                                     AcceptsTab="True"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
+                                     TextWrapping="NoWrap"
+                                     Text="{Binding PipelineConfigJsonText, UpdateSourceTrigger=PropertyChanged}"
+                                     FontFamily="Consolas"
+                                     FontSize="13" />
+                        </StackPanel>
+                    </ui:Card>
+                </Expander>
+            </StackPanel>
+        </ui:DynamicScrollViewer>
+    </Grid>
+</Page>

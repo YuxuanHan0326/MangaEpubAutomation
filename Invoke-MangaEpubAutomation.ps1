@@ -51,9 +51,11 @@ $TalkChar = [string][char]0x8BDD # 话
 
 function Write-Info([string]$Message) { Write-Host "[INFO] $Message" }
 function Write-Warn([string]$Message) { Write-Host "[WARN] $Message" -ForegroundColor Yellow }
+# Fast log-level guard used by debug-only output paths.
 function Test-DebugLog { return $LogLevel -eq 'debug' }
 function Write-DebugLine([string]$Message) { if (Test-DebugLog) { Write-Host "[DEBUG] $Message" -ForegroundColor DarkGray } }
 
+# Emit machine-readable events for GUI subscribers (PIPELINE_EVENT).
 function Write-GuiEvent {
     param(
         [Parameter(Mandatory = $true)][string]$Type,
@@ -84,6 +86,7 @@ function Write-GuiEvent {
     Write-Host ("PIPELINE_EVENT: {0}" -f $json)
 }
 
+# Keep stable latest_* pointers for GUI/result consumers.
 function Update-LatestArtifact {
     param(
         [Parameter(Mandatory = $true)][string]$SourcePath,
@@ -99,6 +102,7 @@ function Update-LatestArtifact {
     }
 }
 
+# Convenience wrapper for stage lifecycle events.
 function Write-GuiStageEvent {
     param(
         [Parameter(Mandatory = $true)][string]$Stage,
@@ -113,6 +117,7 @@ function Write-GuiStageEvent {
         })
 }
 
+# Path existence helper that never throws on malformed paths.
 function Test-PathSafe {
     param(
         [string]$Path,
@@ -133,6 +138,7 @@ function Test-PathSafe {
     }
 }
 
+# Append one UTF-8 line to the current run log.
 function Add-LogEntry {
     param(
         [Parameter(Mandatory = $true)][string]$LogPath,
@@ -141,6 +147,7 @@ function Add-LogEntry {
     Add-Content -LiteralPath $LogPath -Value $Message -Encoding UTF8
 }
 
+# Write message to log and optionally to console (debug/warn aware).
 function Write-StageMessage {
     param(
         [Parameter(Mandatory = $true)][string]$Message,
@@ -155,6 +162,7 @@ function Write-StageMessage {
     else { Write-Host $Message }
 }
 
+# Run an external process and stream outputs into the shared log.
 function Invoke-ExternalWithLogging {
     param(
         [Parameter(Mandatory = $true)][string]$Executable,
@@ -177,6 +185,7 @@ function Invoke-ExternalWithLogging {
     }
 }
 
+# Build default dependency map using environment-derived locations.
 function Get-DefaultDepsConfigObject {
     param([Parameter(Mandatory = $true)][string]$ScriptRoot)
 
@@ -193,7 +202,6 @@ function Get-DefaultDepsConfigObject {
             backend_script = $backendDefault
             models_dir = $modelsDefault
             kcc_exe = Join-Path $ScriptRoot 'kcc_c2e_9.4.3.exe'
-            merge_script = Join-Path $ScriptRoot 'MergeEpubByOrder.py'
         }
         progress = [pscustomobject]@{
             enabled = $true
@@ -204,6 +212,7 @@ function Get-DefaultDepsConfigObject {
     }
 }
 
+# Canonical default pipeline config used for init/reset and fallbacks.
 function Get-DefaultPipelineConfigObject {
     return [pscustomobject]@{
         version = 1
@@ -288,6 +297,7 @@ function Get-DefaultPipelineConfigObject {
     }
 }
 
+# Convert structured kcc.CliOptions into concrete KCC CLI arguments.
 function Build-KccBaseArgsFromConfig {
     param([Parameter(Mandatory = $true)][object]$KccConfig)
 
@@ -418,6 +428,7 @@ function Build-KccBaseArgsFromConfig {
     return @($args)
 }
 
+# Load/validate pipeline config and merge with defaults for missing fields.
 function Resolve-PipelineConfig {
     param(
         [Parameter(Mandatory = $true)][string]$ScriptRoot,
@@ -627,6 +638,7 @@ function Resolve-PipelineConfig {
     }
 }
 
+# Parse integer-like values and clamp into safe bounds.
 function Convert-ToIntBounded {
     param(
         [object]$Value,
@@ -643,6 +655,7 @@ function Convert-ToIntBounded {
     return $parsed
 }
 
+# Resolve dependency locations and progress settings from CLI/json/defaults.
 function Resolve-DependenciesConfig {
     param(
         [Parameter(Mandatory = $true)][string]$ScriptRoot,
@@ -650,6 +663,8 @@ function Resolve-DependenciesConfig {
         [string]$KccExePath
     )
 
+    # Resolve dependency paths with fixed precedence:
+    # CLI override > deps json > environment-derived defaults.
     $explicitDepsPath = -not [string]::IsNullOrWhiteSpace($DepsConfigPath)
     $resolvedDepsPath = if ($explicitDepsPath) { $DepsConfigPath } else { Join-Path $ScriptRoot 'manga_epub_automation.deps.json' }
     $configExists = Test-PathSafe -Path $resolvedDepsPath -PathType Leaf
@@ -678,8 +693,7 @@ function Resolve-DependenciesConfig {
         @{ Key = 'python_exe'; Source = 'env_default' },
         @{ Key = 'backend_script'; Source = 'env_default' },
         @{ Key = 'models_dir'; Source = 'env_default' },
-        @{ Key = 'kcc_exe'; Source = 'script_default' },
-        @{ Key = 'merge_script'; Source = 'script_default' }
+        @{ Key = 'kcc_exe'; Source = 'script_default' }
     )
 
     foreach ($spec in $pathSpecs) {
@@ -747,12 +761,14 @@ function Resolve-DependenciesConfig {
     }
 }
 
+# Persist JSON in UTF-8 without BOM to avoid tool compatibility issues.
 function Write-JsonUtf8NoBom {
     param([Parameter(Mandatory = $true)][object]$Object, [Parameter(Mandatory = $true)][string]$Path)
     $json = $Object | ConvertTo-Json -Depth 100
     [System.IO.File]::WriteAllText($Path, $json, [System.Text.UTF8Encoding]::new($false))
 }
 
+# Read JSON robustly across UTF-8/legacy encoded files.
 function Read-JsonFile {
     param([Parameter(Mandatory = $true)][string]$Path)
 
@@ -764,6 +780,7 @@ function Read-JsonFile {
     }
 }
 
+# Return active workflow object from MangaJaNai appstate config.
 function Get-WorkflowRef {
     param([Parameter(Mandatory = $true)][object]$Config)
 
@@ -784,6 +801,7 @@ function Get-WorkflowRef {
     return $Config.Workflows.'$values'[$wfIndex]
 }
 
+# Apply user-specified workflow override fields except protected paths.
 function Apply-WorkflowOverrides {
     param(
         [Parameter(Mandatory = $true)][object]$Workflow,
@@ -812,6 +830,7 @@ function Apply-WorkflowOverrides {
     }
 }
 
+# Initialize settings template from upstream appstate when missing.
 function Ensure-BaseSettings {
     param(
         [Parameter(Mandatory = $true)][string]$SettingsPath,
@@ -858,6 +877,7 @@ function Ensure-BaseSettings {
     Write-Info "Initialized base settings: $SettingsPath"
 }
 
+# Determine unique source folder under TitleRoot with suffix filtering.
 function Resolve-SourceDirectory {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
@@ -896,6 +916,7 @@ function Resolve-SourceDirectory {
     throw "Multiple source directories found under '$Root'. Use -SourceDirName.`n$($names -join "`n")"
 }
 
+# Extract comic title/author from root metadata with fallback behavior.
 function Get-ComicMetadata {
     param(
         [Parameter(Mandatory = $true)][string]$SourceRoot,
@@ -956,6 +977,7 @@ function Get-ComicMetadata {
     }
 }
 
+# Check whether a chapter directory contains supported image files.
 function Test-ChapterHasImages {
     param([Parameter(Mandatory = $true)][string]$ChapterPath)
     $allowed = @('.webp', '.png', '.jpg', '.jpeg', '.avif', '.bmp')
@@ -963,6 +985,7 @@ function Test-ChapterHasImages {
     return $files.Count -gt 0
 }
 
+# Compute per-chapter/per-volume EPUB filename by group-specific rules.
 function Get-EpubFileName {
     param(
         [Parameter(Mandatory = $true)][string]$GroupName,
@@ -981,6 +1004,7 @@ function Get-EpubFileName {
     return "{0}.epub" -f $ChapterDirName
 }
 
+# Convert Unicode metadata into ASCII-safe text for KCC CLI arguments.
 function Get-KccCliSafeText {
     param(
         [string]$Value,
@@ -1004,6 +1028,7 @@ function Get-KccCliSafeText {
     return $safe
 }
 
+# Post-process KCC EPUB metadata/toc fields to preserve readable titles.
 function Repair-EpubDisplayMetadata {
     param(
         [Parameter(Mandatory = $true)][string]$EpubPath,
@@ -1091,6 +1116,7 @@ function Repair-EpubDisplayMetadata {
     }
 }
 
+# Execute one KCC packaging task with staging, metadata fixup, and logging.
 function Invoke-KccPack {
     param(
         [Parameter(Mandatory = $true)][string]$KccPath,
@@ -1165,6 +1191,7 @@ function Invoke-KccPack {
         }
     }
 }
+# Parse nullable numeric value for chapter order fields.
 function Convert-ToNullableDouble {
     param([object]$Value)
 
@@ -1180,6 +1207,7 @@ function Convert-ToNullableDouble {
     return $null
 }
 
+# Fallback parser for chapter names like “第60.1话/話”.
 function TryParse-ChapterOrderFromName {
     param([Parameter(Mandatory = $true)][string]$ChapterName)
 
@@ -1188,11 +1216,13 @@ function TryParse-ChapterOrderFromName {
     return Convert-ToNullableDouble -Value $m.Groups['num'].Value
 }
 
+# Format numeric order without trailing zero noise.
 function Format-OrderValue {
     param([double]$Value)
     return ([double]$Value).ToString('0.################', [System.Globalization.CultureInfo]::InvariantCulture)
 }
 
+# Stable SHA-256 helper for manifest and override signatures.
 function Get-StringSha256 {
     param([Parameter(Mandatory = $true)][string]$Value)
 
@@ -1207,6 +1237,7 @@ function Get-StringSha256 {
     }
 }
 
+# Generate deterministic merge hash from chapter set, target name, and override.
 function Get-MergePlanManifestHash {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Chapters,
@@ -1224,6 +1255,7 @@ function Get-MergePlanManifestHash {
     return Get-StringSha256 -Value ($hashLines -join "`n")
 }
 
+# Build chapter->order map from root metadata and per-chapter metadata files.
 function Get-DefaultChapterOrderMap {
     param(
         [Parameter(Mandatory = $true)][string]$SourceRoot,
@@ -1288,6 +1320,7 @@ function Get-DefaultChapterOrderMap {
     return $map
 }
 
+# Construct merged-epub chapter plan, ordering, and target file naming.
 function Get-MergedEpubPlan {
     param(
         [Parameter(Mandatory = $true)][string]$SourceRoot,
@@ -1300,6 +1333,8 @@ function Get-MergedEpubPlan {
         [Parameter(Mandatory = $true)][string]$TalkLabel
     )
 
+    # Build merge candidates from per-chapter EPUBs, then derive final
+    # anthology filename from order range (or fallback to "合集").
     if (-not (Test-Path -LiteralPath $UpscaledDefaultGroupPath -PathType Container)) {
         return [pscustomobject]@{ Chapters=@(); TargetPath=$null; TargetFileName=$null; ManifestHash=$null; MergedFiles=@() }
     }
@@ -1371,6 +1406,7 @@ function Get-MergedEpubPlan {
     }
 }
 
+# Parse/validate optional explicit merge order file and collect warnings.
 function Get-MergeOrderOverrideState {
     param([Parameter(Mandatory = $true)][string]$OrderFilePath)
 
@@ -1450,12 +1486,15 @@ function Get-MergeOrderOverrideState {
     return $state
 }
 
+# Reorder merge candidates according to override file, then recompute hash.
 function Apply-MergeOrderOverrideToPlan {
     param(
         [Parameter(Mandatory = $true)][object]$MergePlan,
         [Parameter(Mandatory = $true)][string]$OrderFilePath
     )
 
+    # Apply explicit chapter order file if present/valid.
+    # Unmatched override entries are warned and ignored.
     $state = Get-MergeOrderOverrideState -OrderFilePath $OrderFilePath
     $chapters = @($MergePlan.Chapters)
 
@@ -1533,6 +1572,7 @@ function Apply-MergeOrderOverrideToPlan {
     }
 }
 
+# Dump current merge candidate order as editable template JSON.
 function Export-MergeOrderTemplate {
     param(
         [Parameter(Mandatory = $true)][string]$OrderFilePath,
@@ -1555,6 +1595,7 @@ function Export-MergeOrderTemplate {
     }
 }
 
+# Decide whether merged EPUB must be rebuilt based on manifest and files.
 function Get-MergedRebuildDecision {
     param(
         [Parameter(Mandatory = $true)][string]$ManifestPath,
@@ -1563,6 +1604,8 @@ function Get-MergedRebuildDecision {
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$MergedFiles
     )
 
+    # Rebuild when any merge input signature changed, manifest is stale/missing,
+    # target missing, or old anthology files still exist.
     $otherMerged = @($MergedFiles | Where-Object { $_.FullName -ne $TargetPath })
     if ($otherMerged.Count -gt 0) { return [pscustomobject]@{ NeedRebuild = $true; Reason = 'old-merged-exists'; OtherMerged = $otherMerged } }
     if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) { return [pscustomobject]@{ NeedRebuild = $true; Reason = 'manifest-missing'; OtherMerged = $otherMerged } }
@@ -1577,6 +1620,7 @@ function Get-MergedRebuildDecision {
     return [pscustomobject]@{ NeedRebuild = $false; Reason = 'up-to-date'; OtherMerged = $otherMerged }
 }
 
+# Call Python merge helper with plan json and return process exit code.
 function Invoke-MergedEpubPack {
     param(
         [Parameter(Mandatory = $true)][string]$PythonExe,
@@ -1589,6 +1633,7 @@ function Invoke-MergedEpubPack {
     return [int]$mergeRun.ExitCode
 }
 
+# Append one structured preflight issue entry (ERROR/WARN/INFO).
 function Add-PreflightIssue {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$Issues,
@@ -1604,6 +1649,7 @@ function Add-PreflightIssue {
         }) | Out-Null
 }
 
+# Write final run_result json artifact for CLI/GUI consumption.
 function Write-RunResultFile {
     param(
         [Parameter(Mandatory = $true)][string]$ResultPath,
@@ -1623,6 +1669,7 @@ function Write-RunResultFile {
     Write-JsonUtf8NoBom -Object $obj -Path $ResultPath
 }
 
+# Persist result artifacts and emit terminal run_result GUI event.
 function Write-RunArtifacts {
     param(
         [Parameter(Mandatory = $true)][string]$ResultPath,
@@ -1646,16 +1693,19 @@ function Write-RunArtifacts {
         })
 }
 
+# Logical seam for future plan builders (currently pass-through).
 function Build-ExecutionPlan {
     param([Parameter(Mandatory = $true)][object]$PlanSummary)
     return $PlanSummary
 }
 
+# Logical seam for preflight gate orchestration/extension.
 function Run-PreflightGate {
     param([Parameter(Mandatory = $true)][scriptblock]$GateBody)
     . $GateBody
 }
 
+# Stage dispatcher for chapter EPUB packaging.
 function Invoke-EpubStage {
     param(
         [Parameter(Mandatory = $true)][bool]$ShouldRun,
@@ -1664,6 +1714,7 @@ function Invoke-EpubStage {
     if ($ShouldRun) { . $StageBody }
 }
 
+# Stage dispatcher for merged EPUB generation.
 function Invoke-MergeStage {
     param(
         [Parameter(Mandatory = $true)][bool]$ShouldRun,
@@ -1672,6 +1723,7 @@ function Invoke-MergeStage {
     if ($ShouldRun) { . $StageBody }
 }
 
+# Map configured output format to produced file extension.
 function Get-OutputImageExtension {
     param([Parameter(Mandatory = $true)][string]$Format)
     switch ($Format) {
@@ -1683,6 +1735,7 @@ function Get-OutputImageExtension {
     return '.webp'
 }
 
+# Probe output directory writability before execution starts.
 function Test-DirectoryWritable {
     param([Parameter(Mandatory = $true)][string]$DirectoryPath)
 
@@ -1700,6 +1753,7 @@ function Test-DirectoryWritable {
     }
 }
 
+# Convert seconds into HH:mm:ss for progress display.
 function Format-SecondsAsHms {
     param([double]$Seconds)
     if ($Seconds -lt 0) { $Seconds = 0 }
@@ -1707,6 +1761,7 @@ function Format-SecondsAsHms {
     return ('{0:00}:{1:00}:{2:00}' -f [int]$ts.Hours, [int]$ts.Minutes, [int]$ts.Seconds)
 }
 
+# Build one upscale progress snapshot with percent/rate/ETA fields.
 function Get-UpscaleProgressSnapshot {
     param(
         [int]$TotalUnits,
@@ -1750,6 +1805,7 @@ function Get-UpscaleProgressSnapshot {
     }
 }
 
+# Build one EPUB stage progress snapshot with ETA estimation.
 function Get-EpubPackProgressSnapshot {
     param(
         [int]$DoneUnits,
@@ -1786,6 +1842,7 @@ function Get-EpubPackProgressSnapshot {
     }
 }
 
+# Run backend upscale once and derive live progress from stdout signals.
 function Invoke-UpscaleStage {
     param(
         [Parameter(Mandatory = $true)][string]$PythonExe,
@@ -1798,6 +1855,8 @@ function Invoke-UpscaleStage {
         [switch]$NoUpscaleProgress
     )
 
+    # Parse backend stdout to derive progress/skip/error counters in real time,
+    # while always preserving raw lines in the stage log.
     $allLines = New-Object 'System.Collections.Generic.List[string]'
     $processedCount = 0
     $skipCount = 0
@@ -1923,6 +1982,7 @@ function Invoke-UpscaleStage {
     }
 }
 
+# Forecast upscale total/skipped work units from input/output file presence.
 function Estimate-UpscaleWork {
     param(
         [Parameter(Mandatory = $true)][string]$SourceRoot,
@@ -1967,6 +2027,7 @@ function Estimate-UpscaleWork {
     }
 }
 
+# Forecast EPUB packaging workload from chapter directories and outputs.
 function Estimate-EpubPackWork {
     param(
         [Parameter(Mandatory = $true)][string]$UpscaledRoot,
@@ -1996,6 +2057,7 @@ function Estimate-EpubPackWork {
     return [pscustomobject]@{ Planned = $planned; PredictedProcess = ($planned - $skipped); PredictedSkip = $skipped }
 }
 
+# Render merge chapter order preview (full or compact) for confirmation.
 function Show-MergePreview {
     param(
         [Parameter(Mandatory = $true)][object]$MergePlan,
@@ -2128,7 +2190,7 @@ $pythonExe = [string]$depsResolution.ResolvedPaths.python_exe
 $backendScript = [string]$depsResolution.ResolvedPaths.backend_script
 $modelsDirectory = [string]$depsResolution.ResolvedPaths.models_dir
 $KccExePath = [string]$depsResolution.ResolvedPaths.kcc_exe
-$mergeScriptPath = [string]$depsResolution.ResolvedPaths.merge_script
+$mergeScriptPath = Join-Path $scriptRoot 'MergeEpubByOrder.py'
 $progressConfig = $depsResolution.ProgressConfig
 
 $roamingAppStatePath = if ($env:APPDATA) { Join-Path $env:APPDATA 'MangaJaNaiConverterGui\appstate2.json' } else { '' }

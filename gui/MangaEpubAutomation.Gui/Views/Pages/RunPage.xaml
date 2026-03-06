@@ -1,0 +1,222 @@
+<Page x:Class="MangaEpubAutomation.Gui.Views.Pages.RunPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:behaviors="clr-namespace:MangaEpubAutomation.Gui.Behaviors"
+      mc:Ignorable="d"
+      Title="Run">
+    <Grid Margin="12">
+        <ui:DynamicScrollViewer VerticalScrollBarVisibility="Auto"
+                                IsScrollSpillEnabled="True">
+            <StackPanel>
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Workspace Paths" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="170" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="ScriptPath" />
+                            <TextBox Grid.Row="0"
+                                     Grid.Column="1"
+                                     Margin="0,4,8,4"
+                                     Text="{Binding ScriptPath, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="PowerShell pipeline script path." />
+                            <ui:Button Grid.Row="0" Grid.Column="2" Command="{Binding BrowseScriptPathCommand}" Content="Browse" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="TitleRoot" />
+                            <TextBox Grid.Row="1"
+                                     Grid.Column="1"
+                                     Margin="0,4,8,4"
+                                     Text="{Binding TitleRoot, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Root folder of one title. Source and output folders are derived from here." />
+                            <ui:Button Grid.Row="1" Grid.Column="2" Command="{Binding BrowseTitleRootCommand}" Content="Browse" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="SourceDirName (opt)" />
+                            <TextBox Grid.Row="2"
+                                     Grid.Column="1"
+                                     Margin="0,4,8,4"
+                                     Text="{Binding SourceDirName, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Optional manual source folder override when multiple candidates exist." />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="DepsConfigPath" />
+                            <TextBox Grid.Row="3"
+                                     Grid.Column="1"
+                                     Margin="0,4,8,4"
+                                     Text="{Binding DepsConfigPath, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Dependency config JSON path." />
+                            <ui:Button Grid.Row="3" Grid.Column="2" Command="{Binding BrowseDepsConfigPathCommand}" Content="Browse" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="ConfigPath" />
+                            <TextBox Grid.Row="4"
+                                     Grid.Column="1"
+                                     Margin="0,4,8,4"
+                                     Text="{Binding ConfigPath, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Pipeline config JSON path." />
+                            <ui:Button Grid.Row="4" Grid.Column="2" Command="{Binding BrowsePipelineConfigPathCommand}" Content="Browse" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="MergeOrderFilePath" />
+                            <TextBox Grid.Row="5"
+                                     Grid.Column="1"
+                                     Margin="0,4,8,4"
+                                     Text="{Binding MergeOrderFilePath, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Optional explicit chapter order file for merge stage." />
+                            <ui:Button Grid.Row="5" Grid.Column="2" Command="{Binding BrowseMergeOrderFilePathCommand}" Content="Browse" />
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ui:Card Grid.Column="0" Margin="0,0,6,0" Padding="14">
+                        <StackPanel>
+                            <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Runtime Settings" />
+                            <WrapPanel Margin="0,0,0,8">
+                                <TextBlock Width="110" VerticalAlignment="Center" Text="UpscaleFactor" />
+                                <ComboBox Width="120"
+                                          ItemsSource="{Binding UpscaleFactorOptions}"
+                                          SelectedItem="{Binding UpscaleFactor}"
+                                          ToolTip="Upscale factor. Allowed values: 1, 2, 3, 4." />
+                                <TextBlock Width="80" Margin="20,0,0,0" VerticalAlignment="Center" Text="Format" />
+                                <ComboBox Width="120"
+                                          ItemsSource="{Binding OutputFormatOptions}"
+                                          SelectedItem="{Binding OutputFormat}"
+                                          ToolTip="Output image format for the upscale stage." />
+                            </WrapPanel>
+                            <WrapPanel Margin="0,0,0,8">
+                                <TextBlock Width="110" VerticalAlignment="Center" Text="LossyQuality" />
+                                <TextBox Width="120"
+                                         Text="{Binding LossyQuality, UpdateSourceTrigger=PropertyChanged}"
+                                         behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
+                                         behaviors:NumericTextBoxWheelBehavior.Minimum="1"
+                                         behaviors:NumericTextBoxWheelBehavior.Maximum="100"
+                                         ToolTip="Lossy quality from 1 to 100. Higher means larger files." />
+                                <TextBlock Width="80" Margin="20,0,0,0" VerticalAlignment="Center" Text="LogLevel" />
+                                <ComboBox Width="120"
+                                          ItemsSource="{Binding LogLevelOptions}"
+                                          SelectedItem="{Binding LogLevel}"
+                                          ToolTip="info: concise output, debug: verbose diagnostics." />
+                            </WrapPanel>
+                            <WrapPanel>
+                                <CheckBox Margin="0,0,16,8"
+                                          IsChecked="{Binding DryRun}"
+                                          Content="DryRun"
+                                          ToolTip="Preview only. Do not write files." />
+                                <CheckBox Margin="0,0,16,8"
+                                          IsChecked="{Binding NoUpscaleProgress}"
+                                          Content="NoUpscaleProgress"
+                                          ToolTip="Disable realtime upscale progress updates." />
+                                <CheckBox Margin="0,0,16,8"
+                                          IsChecked="{Binding FailOnPreflightWarnings}"
+                                          Content="FailOnPreflightWarnings"
+                                          ToolTip="Treat warnings as blocking errors." />
+                                <CheckBox Margin="0,0,16,8"
+                                          IsChecked="{Binding MergePreviewCompact}"
+                                          Content="MergePreviewCompact"
+                                          ToolTip="Compact merge preview instead of full chapter list." />
+                            </WrapPanel>
+                        </StackPanel>
+                    </ui:Card>
+
+                    <ui:Card Grid.Column="1" Margin="6,0,0,0" Padding="14">
+                        <StackPanel>
+                            <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Stages &amp; Actions" />
+                            <WrapPanel Margin="0,0,0,8">
+                                <CheckBox Margin="0,0,16,8"
+                                          IsChecked="{Binding RunUpscale}"
+                                          Content="Upscale"
+                                          ToolTip="Run image super-resolution stage." />
+                                <CheckBox Margin="0,0,16,8"
+                                          IsChecked="{Binding RunEpubPackaging}"
+                                          Content="Epub"
+                                          ToolTip="Run per-chapter EPUB packaging stage." />
+                                <CheckBox Margin="0,0,16,8"
+                                          IsChecked="{Binding RunMergedEpub}"
+                                          Content="Merge"
+                                          ToolTip="Run merged EPUB stage for default chapters." />
+                            </WrapPanel>
+                            <WrapPanel Margin="0,6,0,0">
+                                <ui:Button Margin="0,0,10,8" Command="{Binding GeneratePlanCommand}" Content="Generate Plan" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding ExecuteRunCommand}" Content="Run Pipeline" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding CancelRunCommand}" Content="Cancel" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding LoadLatestArtifactsCommand}" Content="Load Latest Artifacts" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </ui:Card>
+                </Grid>
+
+                <ui:Card Margin="0,0,0,10" Padding="14">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Live Progress" />
+                        <TextBlock Margin="0,0,0,8" FontWeight="SemiBold" Text="{Binding PreflightSummaryText}" />
+                        <TextBlock Text="{Binding UpscaleStatusText}" />
+                        <ProgressBar Height="14" Margin="0,3,0,10" Minimum="0" Maximum="100" Value="{Binding UpscalePercent}" />
+                        <TextBlock Text="{Binding EpubStatusText}" />
+                        <ProgressBar Height="14" Margin="0,3,0,0" Minimum="0" Maximum="100" Value="{Binding EpubPercent}" />
+                    </StackPanel>
+                </ui:Card>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ui:Card Grid.Column="0" Margin="0,0,6,0" Padding="14">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Margin="0,0,0,8" FontSize="16" FontWeight="SemiBold" Text="Preflight Issues" />
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding PreflightIssues}" AutoGenerateColumns="False" IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="100" />
+                                    <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="170" />
+                                    <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </ui:Card>
+
+                    <ui:Card Grid.Column="1" Margin="6,0,0,0" Padding="14">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Margin="0,0,0,8" FontSize="16" FontWeight="SemiBold" Text="Merge Preview" />
+                            <TextBlock Grid.Row="1" Margin="0,0,0,8" Text="{Binding MergeTargetPath}" TextWrapping="Wrap" />
+                            <DataGrid Grid.Row="2" ItemsSource="{Binding MergePreviewChapters}" AutoGenerateColumns="False" IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="45" />
+                                    <DataGridTextColumn Header="Chapter" Binding="{Binding Chapter}" Width="120" />
+                                    <DataGridTextColumn Header="Order" Binding="{Binding Order}" Width="85" />
+                                    <DataGridTextColumn Header="EpubPath" Binding="{Binding EpubPath}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </ui:Card>
+                </Grid>
+            </StackPanel>
+        </ui:DynamicScrollViewer>
+    </Grid>
+</Page>
