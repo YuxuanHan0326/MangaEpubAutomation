@@ -4,6 +4,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:MangaEpubAutomation.Gui"
       xmlns:behaviors="clr-namespace:MangaEpubAutomation.Gui.Behaviors"
       mc:Ignorable="d"
       Title="PipelineConfig">
@@ -14,19 +15,19 @@
                 <TextBlock Margin="2,0,0,10"
                            FontSize="18"
                            FontWeight="SemiBold"
-                           Text="Pipeline Config" />
+                           Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Title]}" />
 
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <WrapPanel>
-                        <ui:Button Margin="0,0,10,8" Command="{Binding LoadPipelineConfigCommand}" Content="Load Form" />
-                        <ui:Button Margin="0,0,10,8" Command="{Binding SavePipelineConfigCommand}" Content="Save Form" />
-                        <ui:Button Margin="0,0,10,8" Command="{Binding InitPipelineConfigCommand}" Content="Init Via Script" />
+                        <ui:Button Margin="0,0,10,8" Command="{Binding LoadPipelineConfigCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.LoadForm]}" />
+                        <ui:Button Margin="0,0,10,8" Command="{Binding SavePipelineConfigCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.SaveForm]}" />
+                        <ui:Button Margin="0,0,10,8" Command="{Binding InitPipelineConfigCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.InitViaScript]}" />
                     </WrapPanel>
                 </ui:Card>
 
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <StackPanel>
-                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Pipeline Naming" />
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.PipelineNaming]}" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220" />
@@ -39,43 +40,43 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="SourceDirSuffixToSkip" />
-                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgSourceDirSuffixToSkip, UpdateSourceTrigger=PropertyChanged}" ToolTip="Folder suffix to ignore when scanning source candidates." />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.SourceDirSuffixToSkip]}" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgSourceDirSuffixToSkip, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.SourceDirSuffixToSkip]}" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="OutputDirSuffix" />
-                            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgOutputDirSuffix, UpdateSourceTrigger=PropertyChanged}" ToolTip="Suffix appended to generated upscale image folder." />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.OutputDirSuffix]}" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgOutputDirSuffix, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.OutputDirSuffix]}" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="EpubOutputDirSuffix" />
-                            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgEpubOutputDirSuffix, UpdateSourceTrigger=PropertyChanged}" ToolTip="Suffix for EPUB output folder." />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.EpubOutputDirSuffix]}" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgEpubOutputDirSuffix, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.EpubOutputDirSuffix]}" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="OutputFilenamePattern" />
-                            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgOutputFilenamePattern, UpdateSourceTrigger=PropertyChanged}" ToolTip="Filename template used by upscale output." />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.OutputFilenamePattern]}" />
+                            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgOutputFilenamePattern, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.OutputFilenamePattern]}" />
                         </Grid>
                     </StackPanel>
                 </ui:Card>
 
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <StackPanel>
-                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Manga Upscale Settings" />
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.MangaSettings]}" />
                         <WrapPanel Margin="0,0,0,8">
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgOverwriteExistingFiles}" Content="OverwriteExistingFiles" ToolTip="If enabled, existing output images can be overwritten." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgOverwriteExistingFiles}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.OverwriteExistingFiles]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.OverwriteExistingFiles]}" />
                         </WrapPanel>
                         <WrapPanel Margin="0,0,0,8">
-                            <TextBlock Width="180" VerticalAlignment="Center" Text="UpscaleScaleFactor" />
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.UpscaleScaleFactor]}" />
                             <TextBox Width="100"
                                      Text="{Binding CfgUpscaleScaleFactor, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Upscale factor used in config."
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.UpscaleScaleFactor]}"
                                      behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
                                      behaviors:NumericTextBoxWheelBehavior.Minimum="1"
                                      behaviors:NumericTextBoxWheelBehavior.Maximum="4" />
-                            <TextBlock Width="120" Margin="20,0,0,0" VerticalAlignment="Center" Text="OutputFormat" />
-                            <TextBox Width="120" Text="{Binding CfgOutputFormat, UpdateSourceTrigger=PropertyChanged}" ToolTip="Output image format (webp/png/jpeg/avif)." />
+                            <TextBlock Width="120" Margin="20,0,0,0" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.OutputFormat]}" />
+                            <TextBox Width="120" Text="{Binding CfgOutputFormat, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.OutputFormat]}" />
                         </WrapPanel>
                         <WrapPanel>
-                            <TextBlock Width="180" VerticalAlignment="Center" Text="LossyCompressionQuality" />
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.LossyCompressionQuality]}" />
                             <TextBox Width="100"
                                      Text="{Binding CfgLossyCompressionQuality, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Lossy compression quality from 1 to 100."
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.LossyCompressionQuality]}"
                                      behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
                                      behaviors:NumericTextBoxWheelBehavior.Minimum="1"
                                      behaviors:NumericTextBoxWheelBehavior.Maximum="100" />
@@ -85,38 +86,38 @@
 
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <StackPanel>
-                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="KCC Main (official)" />
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccMain]}" />
                         <WrapPanel Margin="0,0,0,8">
-                            <TextBlock Width="180" VerticalAlignment="Center" Text="Device profile (--profile)" />
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccDeviceProfile]}" />
                             <TextBox Width="140"
                                      Text="{Binding CfgKccDeviceProfile, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Device profile from KCC --help (for example KS)." />
-                            <TextBlock Width="180" Margin="20,0,0,0" VerticalAlignment="Center" Text="Output format (--format)" />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccDeviceProfile]}" />
+                            <TextBlock Width="180" Margin="20,0,0,0" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccOutputFormat]}" />
                             <TextBox Width="120"
                                      Text="{Binding CfgKccOutputFormat, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Output format (Auto/MOBI/EPUB/CBZ/KFX/MOBI+EPUB/PDF)." />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccOutputFormat]}" />
                         </WrapPanel>
                         <WrapPanel Margin="0,0,0,8">
-                            <TextBlock Width="180" VerticalAlignment="Center" Text="Target size MB (--targetsize)" />
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccTargetSizeMb]}" />
                             <TextBox Width="140"
                                      Text="{Binding CfgKccTargetSizeMb, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Maximal output size in MB. Leave empty to follow KCC defaults." />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccTargetSizeMb]}" />
                         </WrapPanel>
                         <WrapPanel>
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccMangaStyle}" Content="Manga style (--manga-style)" ToolTip="Right-to-left reading and splitting." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccWebtoonMode}" Content="Webtoon mode (--webtoon)" ToolTip="Webtoon processing mode." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccHighQualityMagnification}" Content="Try HQ magnification (--hq)" ToolTip="Try to increase magnification quality." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccTwoPanelView}" Content="Two-panel view (--two-panel)" ToolTip="Display two not four panels in Panel View mode." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccNoKepub}" Content="No KEPUB extension (--nokepub)" ToolTip="If output is EPUB, use .epub instead of .kepub.epub." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccDisableProcessing}" Content="Disable processing (--noprocessing)" ToolTip="Do not modify image and ignore profile/processing options." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceColor}" Content="Color mode (--forcecolor)" ToolTip="Do not convert images to grayscale." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccMangaStyle}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccMangaStyle]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccMangaStyle]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccWebtoonMode}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccWebtoonMode]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccWebtoonMode]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccHighQualityMagnification}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccHighQualityMagnification]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccHighQualityMagnification]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccTwoPanelView}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccTwoPanelView]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccTwoPanelView]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccNoKepub}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccNoKepub]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccNoKepub]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccDisableProcessing}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccDisableProcessing]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccDisableProcessing]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceColor}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccForceColor]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccForceColor]}" />
                         </WrapPanel>
                     </StackPanel>
                 </ui:Card>
 
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <StackPanel>
-                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="KCC Processing (official)" />
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccProcessing]}" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="260" />
@@ -133,116 +134,116 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Double-page parser (--splitter)" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccDoublePageParser]}" />
                             <ComboBox Grid.Row="0"
                                       Grid.Column="1"
                                       Margin="0,4,16,4"
                                       SelectedValuePath="Tag"
                                       SelectedValue="{Binding CfgKccSplitterMode}"
-                                      ToolTip="Double page parsing mode: 0 Split, 1 Rotate, 2 Both. Default follows KCC config.">
-                                <ComboBoxItem Tag="-1" Content="Default (unset)" />
-                                <ComboBoxItem Tag="0" Content="Split" />
-                                <ComboBoxItem Tag="1" Content="Rotate" />
-                                <ComboBoxItem Tag="2" Content="Both" />
+                                      ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccDoublePageParser]}">
+                                <ComboBoxItem Tag="-1" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.DefaultUnset]}" />
+                                <ComboBoxItem Tag="0" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Split]}" />
+                                <ComboBoxItem Tag="1" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Rotate]}" />
+                                <ComboBoxItem Tag="2" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Both]}" />
                             </ComboBox>
 
-                            <TextBlock Grid.Row="0" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="Cropping mode (--cropping)" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccCroppingMode]}" />
                             <ComboBox Grid.Row="0"
                                       Grid.Column="3"
                                       Margin="0,4,0,4"
                                       SelectedValuePath="Tag"
                                       SelectedValue="{Binding CfgKccCroppingMode}"
-                                      ToolTip="Cropping mode: 0 Disabled, 1 Margins, 2 Margins + page numbers.">
-                                <ComboBoxItem Tag="-1" Content="Default (unset)" />
-                                <ComboBoxItem Tag="0" Content="Disabled" />
-                                <ComboBoxItem Tag="1" Content="Margins" />
-                                <ComboBoxItem Tag="2" Content="Margins + page numbers" />
+                                      ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccCroppingMode]}">
+                                <ComboBoxItem Tag="-1" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.DefaultUnset]}" />
+                                <ComboBoxItem Tag="0" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Disabled]}" />
+                                <ComboBoxItem Tag="1" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Margins]}" />
+                                <ComboBoxItem Tag="2" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.MarginsPageNo]}" />
                             </ComboBox>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Gamma (--gamma)" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccGamma]}" />
                             <TextBox Grid.Row="1"
                                      Grid.Column="1"
                                      Margin="0,4,16,4"
                                      Text="{Binding CfgKccGamma, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Auto or numeric gamma value." />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccGamma]}" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="Inter-panel crop (--interpanelcrop)" />
+                            <TextBlock Grid.Row="1" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccInterPanelCrop]}" />
                             <ComboBox Grid.Row="1"
                                       Grid.Column="3"
                                       Margin="0,4,0,4"
                                       SelectedValuePath="Tag"
                                       SelectedValue="{Binding CfgKccInterPanelCropMode}"
-                                      ToolTip="Crop empty inter-panel sections: 0 Disabled, 1 Horizontal, 2 Both directions.">
-                                <ComboBoxItem Tag="-1" Content="Default (unset)" />
-                                <ComboBoxItem Tag="0" Content="Disabled" />
-                                <ComboBoxItem Tag="1" Content="Horizontally" />
-                                <ComboBoxItem Tag="2" Content="Both" />
+                                      ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccInterPanelCrop]}">
+                                <ComboBoxItem Tag="-1" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.DefaultUnset]}" />
+                                <ComboBoxItem Tag="0" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Disabled]}" />
+                                <ComboBoxItem Tag="1" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Horizontally]}" />
+                                <ComboBoxItem Tag="2" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Both]}" />
                             </ComboBox>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Cropping power (--croppingpower)" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccCroppingPower]}" />
                             <TextBox Grid.Row="2"
                                      Grid.Column="1"
                                      Margin="0,4,16,4"
                                      Text="{Binding CfgKccCroppingPower, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Cropping power. Leave empty to follow KCC default (1.0)." />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccCroppingPower]}" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="Preserve margin % (--preservemargin)" />
+                            <TextBlock Grid.Row="2" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccPreserveMarginPercent]}" />
                             <TextBox Grid.Row="2"
                                      Grid.Column="3"
                                      Margin="0,4,0,4"
                                      Text="{Binding CfgKccPreserveMarginPercent, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="After crop calculation, add back this percentage margin." />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccPreserveMarginPercent]}" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Cropping min ratio (--croppingminimum)" />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccCroppingMinimumRatio]}" />
                             <TextBox Grid.Row="3"
                                      Grid.Column="1"
                                      Margin="0,4,16,4"
                                      Text="{Binding CfgKccCroppingMinimumRatio, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Minimum cropped area ratio. Leave empty for default." />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccCroppingMinimumRatio]}" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="JPEG quality (--jpeg-quality)" />
-                            <TextBox Grid.Row="3" Grid.Column="3" Margin="0,4,0,4" Text="{Binding CfgKccJpegQuality, UpdateSourceTrigger=PropertyChanged}" ToolTip="0-95. Leave empty for KCC default." />
+                            <TextBlock Grid.Row="3" Grid.Column="2" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccJpegQuality]}" />
+                            <TextBox Grid.Row="3" Grid.Column="3" Margin="0,4,0,4" Text="{Binding CfgKccJpegQuality, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccJpegQuality]}" />
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Image output mode" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccImageOutputMode]}" />
                             <ComboBox Grid.Row="4"
                                       Grid.Column="1"
                                       Margin="0,4,16,4"
                                       SelectedValuePath="Tag"
                                       SelectedValue="{Binding CfgKccImageOutputMode}"
-                                      ToolTip="Image encoding mode used by KCC output files.">
-                                <ComboBoxItem Tag="0" Content="JPEG/Auto (default)" />
-                                <ComboBoxItem Tag="1" Content="PNG (--forcepng)" />
-                                <ComboBoxItem Tag="2" Content="mozJPEG (--mozjpeg)" />
+                                      ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccImageOutputMode]}">
+                                <ComboBoxItem Tag="0" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.ImageModeDefault]}" />
+                                <ComboBoxItem Tag="1" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.ImageModePng]}" />
+                                <ComboBoxItem Tag="2" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.ImageModeMozJpeg]}" />
                             </ComboBox>
                         </Grid>
                         <WrapPanel Margin="0,8,0,0">
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccUpscaleSmallImages}" Content="Resize small images (--upscale)" ToolTip="Resize images smaller than device resolution." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccStretchToResolution}" Content="Stretch to resolution (--stretch)" ToolTip="Stretch images to device resolution." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceBlackBorders}" Content="Force black borders (--blackborders)" ToolTip="Disable autodetection and force black borders." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceWhiteBorders}" Content="Force white borders (--whiteborders)" ToolTip="Disable autodetection and force white borders." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccMaximizeStrips}" Content="1x4 to 2x2 strips (--maximizestrips)" ToolTip="Turn 1x4 strips into 2x2 strips." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccUpscaleSmallImages}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccUpscaleSmallImages]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccUpscaleSmallImages]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccStretchToResolution}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccStretchToResolution]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccStretchToResolution]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceBlackBorders}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccForceBlackBorders]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccForceBlackBorders]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccForceWhiteBorders}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccForceWhiteBorders]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccForceWhiteBorders]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccMaximizeStrips}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccMaximizeStrips]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccMaximizeStrips]}" />
                         </WrapPanel>
                     </StackPanel>
                 </ui:Card>
 
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <StackPanel>
-                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="KCC Post-processing (official)" />
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccPost]}" />
                         <WrapPanel Margin="0,8,0,0">
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccSpreadShift}" Content="Spread shift (--spreadshift)" ToolTip="Shift first page to opposite side in landscape for spread alignment." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccNoRotateSpreads}" Content="No rotate spreads (--norotate)" ToolTip="Do not rotate double-page spreads when splitter is enabled." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccRotateFirstSpread}" Content="Rotate first spread (--rotatefirst)" ToolTip="Put rotated 2-page spread first in splitter mode." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccAutoLevel}" Content="Extreme black point (--autolevel)" ToolTip="Set most common dark pixel value as black point." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccDisableAutoContrast}" Content="Disable autocontrast (--noautocontrast)" ToolTip="Disable autocontrast processing." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccColorAutoContrast}" Content="Color autocontrast (--colorautocontrast)" ToolTip="Apply autocontrast to color pages too." />
-                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccEraseRainbow}" Content="Rainbow eraser (--eraserainbow)" ToolTip="Attenuate interfering frequencies for color e-ink rainbow effect." />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccSpreadShift}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccSpreadShift]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccSpreadShift]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccNoRotateSpreads}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccNoRotateSpreads]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccNoRotateSpreads]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccRotateFirstSpread}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccRotateFirstSpread]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccRotateFirstSpread]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccAutoLevel}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccAutoLevel]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccAutoLevel]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccDisableAutoContrast}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccDisableAutoContrast]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccDisableAutoContrast]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccColorAutoContrast}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccColorAutoContrast]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccColorAutoContrast]}" />
+                            <CheckBox Margin="0,0,16,8" IsChecked="{Binding CfgKccEraseRainbow}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.KccEraseRainbow]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.KccEraseRainbow]}" />
                         </WrapPanel>
                     </StackPanel>
                 </ui:Card>
 
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <StackPanel>
-                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Merge Metadata" />
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.MergeMetadata]}" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220" />
@@ -255,26 +256,26 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="Language" />
-                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeLanguage, UpdateSourceTrigger=PropertyChanged}" ToolTip="Language metadata for merged EPUB." />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Language]}" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeLanguage, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.Language]}" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="DescriptionHeader" />
-                            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeDescriptionHeader, UpdateSourceTrigger=PropertyChanged}" ToolTip="Description prefix used when building merged EPUB metadata." />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.DescriptionHeader]}" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeDescriptionHeader, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.DescriptionHeader]}" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="MetadataContributor" />
-                            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeMetadataContributor, UpdateSourceTrigger=PropertyChanged}" ToolTip="Contributor metadata written by merge stage." />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.MetadataContributor]}" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4,0,4" Text="{Binding CfgMergeMetadataContributor, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.MetadataContributor]}" />
 
-                            <CheckBox Grid.Row="3" Grid.Column="1" Margin="0,8,0,0" IsChecked="{Binding CfgMergeIncludeOrderInDescription}" Content="IncludeOrderInDescription" ToolTip="Include chapter order values in merged EPUB description." />
+                            <CheckBox Grid.Row="3" Grid.Column="1" Margin="0,8,0,0" IsChecked="{Binding CfgMergeIncludeOrderInDescription}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.IncludeOrderInDescription]}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.IncludeOrderInDescription]}" />
                         </Grid>
                     </StackPanel>
                 </ui:Card>
 
-                <Expander Header="Advanced JSON Editor" IsExpanded="False">
+                <Expander Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.AdvancedJsonEditor]}" IsExpanded="False">
                     <ui:Card Margin="0,8,0,0" Padding="14">
                         <StackPanel>
                             <WrapPanel>
-                                <ui:Button Margin="0,0,10,8" Command="{Binding LoadPipelineConfigCommand}" Content="Reload JSON" />
-                                <ui:Button Margin="0,0,10,8" Command="{Binding SavePipelineConfigRawJsonCommand}" Content="Save JSON Raw" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding LoadPipelineConfigCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.ReloadJson]}" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding SavePipelineConfigRawJsonCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.SaveJsonRaw]}" />
                             </WrapPanel>
                             <TextBox Margin="0,8,0,0"
                                      AcceptsReturn="True"

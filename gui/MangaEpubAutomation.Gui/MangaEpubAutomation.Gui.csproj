@@ -9,11 +9,19 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>MangaEpubAutomation.Gui</RootNamespace>
     <AssemblyName>MangaEpubAutomation.Gui</AssemblyName>
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <InformationalVersion>v0.1</InformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="WPF-UI" Version="4.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Fonts\SourceHanSansSC-Regular.otf" />
   </ItemGroup>
 
 </Project>

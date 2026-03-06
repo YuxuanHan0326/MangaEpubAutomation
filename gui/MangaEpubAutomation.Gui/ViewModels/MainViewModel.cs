@@ -1,15 +1,18 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Forms;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MangaEpubAutomation.Gui;
 using MangaEpubAutomation.Gui.Models;
 using MangaEpubAutomation.Gui.Services;
 
@@ -21,6 +24,7 @@ public partial class MainViewModel : ObservableObject
     private readonly string _repoRoot;
     private readonly StringBuilder _logBuilder = new();
     private CancellationTokenSource? _runningCts;
+    private static LocalizationManager Loc => LocalizationManager.Instance;
 
     public MainViewModel()
     {
@@ -110,10 +114,12 @@ public partial class MainViewModel : ObservableObject
         ClearLogsCommand = new RelayCommand(ClearLogs);
         LoadLatestPlanCommand = new RelayCommand(LoadLatestPlanPreview);
         LoadLatestResultCommand = new RelayCommand(LoadLatestResultPreview);
+        Loc.PropertyChanged += OnLocalizationChanged;
 
         if (File.Exists(DepsConfigPath)) LoadDependenciesFromFile();
         if (File.Exists(ConfigPath)) LoadPipelineConfigFromFile();
-        RunStatusText = "Idle";
+        RunStatusText = L("Status.Idle");
+        PreflightSummaryText = L("Status.NoPreflight");
     }
 
     public IReadOnlyList<int> UpscaleFactorOptions { get; } = new[] { 1, 2, 3, 4 };
@@ -147,6 +153,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string upscaleStatusText = "-";
     [ObservableProperty] private double epubPercent;
     [ObservableProperty] private string epubStatusText = "-";
+    [ObservableProperty] private double mergePercent;
+    [ObservableProperty] private string mergeStatusText = "-";
+    [ObservableProperty] private bool mergeProgressIndeterminate;
     [ObservableProperty] private string preflightSummaryText = "No preflight result yet.";
     [ObservableProperty] private string mergeTargetPath = string.Empty;
     [ObservableProperty] private string lastPlanPath = string.Empty;
@@ -301,7 +310,7 @@ public partial class MainViewModel : ObservableObject
     {
         using var dialog = new FolderBrowserDialog
         {
-            Description = "Select TitleRoot folder",
+            Description = L("Msg.SelectTitleRoot"),
             SelectedPath = Directory.Exists(TitleRoot) ? TitleRoot : _repoRoot
         };
         if (dialog.ShowDialog() == DialogResult.OK) TitleRoot = dialog.SelectedPath;
@@ -353,7 +362,7 @@ public partial class MainViewModel : ObservableObject
 
     private void BrowseDepsModelsDir()
     {
-        var path = BrowseFolderPath(DepsModelsDir, "Select models_dir folder");
+        var path = BrowseFolderPath(DepsModelsDir, L("Msg.SelectModelsDir"));
         if (!string.IsNullOrWhiteSpace(path)) DepsModelsDir = path;
     }
 
@@ -420,39 +429,93 @@ public partial class MainViewModel : ObservableObject
         if (planRun is null || planRun.WasCanceled) return;
         if (GetPreflightCount("ERROR") > 0)
         {
-            ShowError("Preflight has errors. Fix them before execution.");
+            ShowError(L("Msg.PreflightHasErrors"));
             return;
         }
-        if (GetPreflightCount("WARN") > 0 || GetPreflightCount("WARNING") > 0)
+        if (GetPreflightCount("WARN") > 0)
         {
-            var ok = AskYesNo(BuildWarningMessage(), "Preflight Warnings");
-            if (!ok) return;
-        }
-        if (RunMergedEpub && MergePreviewChapters.Count > 0)
-        {
-            var ok = AskYesNo($"Merge order has {MergePreviewChapters.Count} chapters. Continue?", "Merge Confirmation");
+            var ok = AskYesNo(BuildWarningMessage(), L("Msg.PreflightWarningsTitle"));
             if (!ok) return;
         }
 
-        await RunPipelineProcessAsync(planOnly: false).ConfigureAwait(false);
+        if (!RunMergedEpub)
+        {
+            await RunPipelineProcessAsync(planOnly: false).ConfigureAwait(false);
+            return;
+        }
+
+        var hasPreMergeStages = RunUpscale || RunEpubPackaging;
+        if (hasPreMergeStages)
+        {
+            var preMergeRun = await RunPipelineProcessAsync(
+                planOnly: false,
+                runUpscaleOverride: RunUpscale,
+                runEpubOverride: RunEpubPackaging,
+                runMergeOverride: false,
+                resetProgress: true).ConfigureAwait(false);
+            if (preMergeRun is null || preMergeRun.WasCanceled || preMergeRun.ExitCode != 0) return;
+
+            var mergePlanRefresh = await RunPipelineProcessAsync(
+                planOnly: true,
+                runUpscaleOverride: false,
+                runEpubOverride: false,
+                runMergeOverride: true).ConfigureAwait(false);
+            if (mergePlanRefresh is null || mergePlanRefresh.WasCanceled) return;
+            if (GetPreflightCount("ERROR") > 0)
+            {
+                ShowError(L("Msg.PreflightHasErrors"));
+                return;
+            }
+        }
+
+        if (MergePreviewChapters.Count > 0)
+        {
+            var ok = AskYesNo(LF("Msg.MergeConfirmFmt", MergePreviewChapters.Count), L("Msg.MergeConfirmTitle"));
+            if (!ok) return;
+        }
+
+        await RunPipelineProcessAsync(
+            planOnly: false,
+            runUpscaleOverride: false,
+            runEpubOverride: false,
+            runMergeOverride: true,
+            resetProgress: false).ConfigureAwait(false);
     }
 
-    private async Task<ProcessRunResult?> RunPipelineProcessAsync(bool planOnly)
+    private async Task<ProcessRunResult?> RunPipelineProcessAsync(
+        bool planOnly,
+        bool? runUpscaleOverride = null,
+        bool? runEpubOverride = null,
+        bool? runMergeOverride = null,
+        bool resetProgress = true)
     {
         if (IsRunning) return null;
 
-        IsRunning = true;
-        RunStatusText = planOnly ? "Running plan..." : "Running pipeline...";
-        _runningCts = new CancellationTokenSource();
-        if (!planOnly)
+        var effectiveRunUpscale = runUpscaleOverride ?? RunUpscale;
+        var effectiveRunEpub = runEpubOverride ?? RunEpubPackaging;
+        var effectiveRunMerge = runMergeOverride ?? RunMergedEpub;
+
+        RunOnUi(() =>
         {
-            UpscalePercent = 0;
-            EpubPercent = 0;
-            UpscaleStatusText = "-";
-            EpubStatusText = "-";
+            IsRunning = true;
+            RunStatusText = planOnly ? L("Status.RunningPlan") : L("Status.RunningPipeline");
+        });
+        _runningCts = new CancellationTokenSource();
+        if (!planOnly && resetProgress)
+        {
+            RunOnUi(() =>
+            {
+                UpscalePercent = 0;
+                EpubPercent = 0;
+                MergePercent = 0;
+                UpscaleStatusText = "-";
+                EpubStatusText = "-";
+                MergeStatusText = "-";
+                MergeProgressIndeterminate = false;
+            });
         }
 
-        var args = BuildPipelineArguments(planOnly);
+        var args = BuildPipelineArguments(planOnly, effectiveRunUpscale, effectiveRunEpub, effectiveRunMerge);
         AppendLog($"Run: {string.Join(" ", args)}");
 
         ProcessRunResult result;
@@ -468,7 +531,7 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            RunOnUi(() => ShowError("Failed to launch process: " + ex.Message));
+            RunOnUi(() => ShowError(LF("Msg.LaunchFailedFmt", ex.Message)));
             result = null!;
         }
 
@@ -476,19 +539,19 @@ public partial class MainViewModel : ObservableObject
         {
             if (result is not null)
             {
-                RunStatusText = result.WasCanceled ? "Canceled" : $"Exit={result.ExitCode}";
-                AppendLog("Process exit code: " + result.ExitCode);
+                RunStatusText = result.WasCanceled ? L("Status.Canceled") : LF("Status.ExitFmt", result.ExitCode);
+                AppendLog(LF("Msg.ProcessExitFmt", result.ExitCode));
                 LoadLatestArtifacts();
             }
         });
 
-        IsRunning = false;
+        RunOnUi(() => IsRunning = false);
         _runningCts?.Dispose();
         _runningCts = null;
         return result;
     }
 
-    private List<string> BuildPipelineArguments(bool planOnly)
+    private List<string> BuildPipelineArguments(bool planOnly, bool runUpscale, bool runEpubPackaging, bool runMergedEpub)
     {
         var args = new List<string>
         {
@@ -504,9 +567,9 @@ public partial class MainViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(DepsConfigPath)) { args.Add("-DepsConfigPath"); args.Add(DepsConfigPath); }
         if (!string.IsNullOrWhiteSpace(ConfigPath)) { args.Add("-ConfigPath"); args.Add(ConfigPath); }
         if (!string.IsNullOrWhiteSpace(MergeOrderFilePath)) { args.Add("-MergeOrderFilePath"); args.Add(MergeOrderFilePath); }
-        if (!RunUpscale) args.Add("-SkipUpscale");
-        if (!RunEpubPackaging) args.Add("-SkipEpubPackaging");
-        if (!RunMergedEpub) args.Add("-SkipMergedEpub");
+        if (!runUpscale) args.Add("-SkipUpscale");
+        if (!runEpubPackaging) args.Add("-SkipEpubPackaging");
+        if (!runMergedEpub) args.Add("-SkipMergedEpub");
         if (DryRun) args.Add("-DryRun");
         if (NoUpscaleProgress) args.Add("-NoUpscaleProgress");
         if (FailOnPreflightWarnings) args.Add("-FailOnPreflightWarnings");
@@ -519,38 +582,38 @@ public partial class MainViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(ScriptPath) || !File.Exists(ScriptPath))
         {
-            error = "ScriptPath missing or invalid.";
+            error = L("Msg.Validate.ScriptPath");
             return false;
         }
         if (string.IsNullOrWhiteSpace(TitleRoot) || !Directory.Exists(TitleRoot))
         {
-            error = "TitleRoot missing or invalid.";
+            error = L("Msg.Validate.TitleRoot");
             return false;
         }
         if (!RunUpscale && !RunEpubPackaging && !RunMergedEpub)
         {
-            error = "At least one stage must be selected.";
+            error = L("Msg.Validate.StageRequired");
             return false;
         }
         if (RunUpscale && RunMergedEpub && !RunEpubPackaging)
         {
-            error = "Invalid stage combination: Upscale + Merge without EPUB.";
+            error = L("Msg.Validate.StageCombination");
             return false;
         }
         if (!TryParseJsonFile(DepsConfigPath, out error))
         {
-            error = "Deps JSON invalid: " + error;
+            error = LF("Msg.Validate.DepsJsonFmt", error);
             return false;
         }
         if (!TryParseJsonFile(ConfigPath, out error))
         {
-            error = "Config JSON invalid: " + error;
+            error = LF("Msg.Validate.ConfigJsonFmt", error);
             return false;
         }
         if (!string.IsNullOrWhiteSpace(MergeOrderFilePath) && File.Exists(MergeOrderFilePath)
             && !TryReadMergeOrder(MergeOrderFilePath, out _, out error))
         {
-            error = "Merge order JSON invalid: " + error;
+            error = LF("Msg.Validate.MergeOrderJsonFmt", error);
             return false;
         }
         error = string.Empty;
@@ -597,6 +660,9 @@ public partial class MainViewModel : ObservableObject
     {
         switch (ev.Type)
         {
+            case "stage":
+                ParseStageEvent(ev.Data);
+                break;
             case "plan_ready":
                 LastPlanPath = GetString(ev.Data, "plan_path");
                 break;
@@ -618,8 +684,66 @@ public partial class MainViewModel : ObservableObject
                 LastResultPath = GetString(ev.Data, "result_path");
                 break;
             default:
-                AppendLog($"[event:{ev.Type}] {ev.RawJson}");
+                AppendLog(LF("Msg.EventFmt", ev.Type, ev.RawJson));
                 break;
+        }
+    }
+
+    private void ParseStageEvent(JsonElement data)
+    {
+        var stage = GetString(data, "stage").Trim().ToLowerInvariant();
+        var phase = GetString(data, "phase").Trim().ToLowerInvariant();
+        var payload = TryGetProperty(data, "data", out var nested) ? nested : default;
+
+        if (!string.Equals(stage, "merge", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        switch (phase)
+        {
+            case "start":
+            {
+                var chapters = GetInt(payload, "chapters");
+                var needRebuild = GetBool(payload, "need_rebuild");
+                var reason = GetString(payload, "reason");
+                MergePercent = 0;
+                MergeProgressIndeterminate = chapters > 0 && needRebuild;
+
+                if (chapters <= 0)
+                {
+                    MergeStatusText = L("Status.MergeNoChapters");
+                }
+                else if (needRebuild)
+                {
+                    MergeStatusText = LF("Status.MergeRunningFmt", chapters);
+                }
+                else
+                {
+                    MergePercent = 100;
+                    MergeProgressIndeterminate = false;
+                    MergeStatusText = LF("Status.MergeSkippedFmt", string.IsNullOrWhiteSpace(reason) ? "up-to-date" : reason);
+                }
+                break;
+            }
+            case "end":
+            {
+                MergePercent = 100;
+                MergeProgressIndeterminate = false;
+                var packed = GetInt(payload, "packed");
+                var skipped = GetInt(payload, "skipped");
+                var failed = GetInt(payload, "failed");
+                MergeStatusText = LF("Status.MergeDoneFmt", packed, skipped, failed);
+                break;
+            }
+            case "skip":
+            {
+                MergePercent = 100;
+                MergeProgressIndeterminate = false;
+                var reason = GetString(payload, "reason");
+                MergeStatusText = LF("Status.MergeSkippedFmt", string.IsNullOrWhiteSpace(reason) ? "skipped" : reason);
+                break;
+            }
         }
     }
 
@@ -628,20 +752,27 @@ public partial class MainViewModel : ObservableObject
         var errors = GetInt(data, "errors");
         var warnings = GetInt(data, "warnings");
         var infos = GetInt(data, "infos");
-        PreflightSummaryText = $"Errors={errors}, Warnings={warnings}, Infos={infos}";
+        PreflightSummaryText = LF("Run.PreflightSummaryFmt", errors, warnings, infos);
         PreflightIssues.Clear();
         if (TryGetProperty(data, "issues", out var issues) && issues.ValueKind == JsonValueKind.Array)
         {
             foreach (var it in issues.EnumerateArray())
             {
+                var severity = GetString(it, "Severity");
+                if (string.IsNullOrWhiteSpace(severity)) severity = GetString(it, "severity");
+                var code = GetString(it, "Code");
+                if (string.IsNullOrWhiteSpace(code)) code = GetString(it, "code");
+                var message = GetString(it, "Message");
+                if (string.IsNullOrWhiteSpace(message)) message = GetString(it, "message");
                 PreflightIssues.Add(new PipelineIssue
                 {
-                    Severity = GetString(it, "Severity"),
-                    Code = GetString(it, "Code"),
-                    Message = GetString(it, "Message")
+                    Severity = NormalizeSeverity(severity),
+                    Code = code,
+                    Message = message
                 });
             }
         }
+        RefreshPreflightSummaryFromIssues(errors, warnings, infos);
     }
 
     private void ParseMergePreview(JsonElement data)
@@ -683,39 +814,176 @@ public partial class MainViewModel : ObservableObject
     private static string GetString(JsonElement element, string key) => TryGetProperty(element, key, out var value) ? value.ToString() : string.Empty;
     private static int GetInt(JsonElement element, string key) => TryGetProperty(element, key, out var value) && value.TryGetInt32(out var n) ? n : 0;
     private static double GetDouble(JsonElement element, string key) => TryGetProperty(element, key, out var value) && value.TryGetDouble(out var n) ? n : 0;
+    private static bool GetBool(JsonElement element, string key)
+    {
+        if (!TryGetProperty(element, key, out var value))
+        {
+            return false;
+        }
+
+        if (value.ValueKind == JsonValueKind.True) return true;
+        if (value.ValueKind == JsonValueKind.False) return false;
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            var text = value.GetString();
+            return string.Equals(text, "true", StringComparison.OrdinalIgnoreCase);
+        }
+        return false;
+    }
 
     private int GetPreflightCount(string severity)
     {
-        return PreflightIssues.Count(x => string.Equals(x.Severity, severity, StringComparison.OrdinalIgnoreCase));
+        var expected = NormalizeSeverity(severity);
+        return PreflightIssues.Count(x => string.Equals(NormalizeSeverity(x.Severity), expected, StringComparison.OrdinalIgnoreCase));
     }
 
     private string BuildWarningMessage()
     {
         var lines = PreflightIssues
-            .Where(x => string.Equals(x.Severity, "WARN", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(x.Severity, "WARNING", StringComparison.OrdinalIgnoreCase))
+            .Where(x => string.Equals(NormalizeSeverity(x.Severity), "WARN", StringComparison.OrdinalIgnoreCase))
             .Select(x => $"- [{x.Code}] {x.Message}")
             .ToList();
 
-        if (lines.Count == 0) return "Preflight has warnings. Continue?";
-        return "Preflight warnings:\n\n" + string.Join("\n", lines) + "\n\nContinue?";
+        if (lines.Count == 0) return L("Msg.PreflightWarningsContinue");
+        return L("Msg.PreflightWarningsHeader") + "\n\n" + string.Join("\n", lines) + "\n\n" + L("Msg.PreflightWarningsContinue");
+    }
+
+    private void RefreshPreflightSummaryFromIssues(int? errorCount = null, int? warnCount = null, int? infoCount = null)
+    {
+        var errors = errorCount ?? GetPreflightCount("ERROR");
+        var warnings = warnCount ?? GetPreflightCount("WARN");
+        var infos = infoCount ?? GetPreflightCount("INFO");
+        PreflightSummaryText = LF("Run.PreflightSummaryFmt", errors, warnings, infos);
+    }
+
+    private static string NormalizeSeverity(string? severity)
+    {
+        if (string.IsNullOrWhiteSpace(severity))
+        {
+            return "INFO";
+        }
+
+        var normalized = severity.Trim().ToUpperInvariant();
+        return normalized switch
+        {
+            "WARNING" => "WARN",
+            "INFORMATION" => "INFO",
+            _ => normalized
+        };
     }
 
     private static bool AskYesNo(string message, string title)
     {
-        return System.Windows.MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No)
-               == MessageBoxResult.Yes;
+        if (TryShowNativeTaskDialog(
+                caption: title,
+                heading: title,
+                text: message,
+                icon: TaskDialogIcon.Warning,
+                buttons: [TaskDialogButton.Yes, TaskDialogButton.No],
+                defaultButton: TaskDialogButton.No,
+                out var result))
+        {
+            return result == TaskDialogButton.Yes;
+        }
+
+        return System.Windows.MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
     }
 
     private static void ShowError(string message)
     {
-        System.Windows.MessageBox.Show(message, "MangaEpubAutomation GUI", MessageBoxButton.OK, MessageBoxImage.Error);
+        if (TryShowNativeTaskDialog(
+                caption: L("App.GuiTitle"),
+                heading: L("App.GuiTitle"),
+                text: message,
+                icon: TaskDialogIcon.Error,
+                buttons: [TaskDialogButton.OK],
+                defaultButton: TaskDialogButton.OK,
+                out _))
+        {
+            return;
+        }
+
+        System.Windows.MessageBox.Show(message, L("App.GuiTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private static bool TryShowNativeTaskDialog(
+        string caption,
+        string heading,
+        string text,
+        TaskDialogIcon icon,
+        IReadOnlyList<TaskDialogButton> buttons,
+        TaskDialogButton defaultButton,
+        out TaskDialogButton result)
+    {
+        result = TaskDialogButton.Cancel;
+        try
+        {
+            var page = new TaskDialogPage
+            {
+                Caption = caption,
+                Heading = heading,
+                Text = text,
+                Icon = icon,
+                AllowCancel = true
+            };
+            foreach (var button in buttons)
+            {
+                page.Buttons.Add(button);
+            }
+            page.DefaultButton = defaultButton;
+            result = TaskDialog.ShowDialog(page);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private void AppendLog(string line)
     {
         _logBuilder.AppendLine(line);
         LiveLogText = _logBuilder.ToString();
+        CaptureRuntimeWarning(line);
+    }
+
+    private void CaptureRuntimeWarning(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return;
+        }
+
+        var trimmed = line.Trim();
+        if (!trimmed.StartsWith("[WARN]", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var payload = trimmed[6..].Trim();
+        var code = "RUNTIME_WARN";
+        var message = payload;
+        var match = Regex.Match(payload, @"^\[(?<code>[^\]]+)\]\s*(?<msg>.+)$");
+        if (match.Success)
+        {
+            code = match.Groups["code"].Value.Trim();
+            message = match.Groups["msg"].Value.Trim();
+        }
+
+        var exists = PreflightIssues.Any(x =>
+            string.Equals(NormalizeSeverity(x.Severity), "WARN", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(x.Message, message, StringComparison.Ordinal));
+        if (!exists)
+        {
+            PreflightIssues.Add(new PipelineIssue
+            {
+                Severity = "WARN",
+                Code = code,
+                Message = message
+            });
+            RefreshPreflightSummaryFromIssues();
+        }
     }
 
     private void ClearLogs()
@@ -736,7 +1004,9 @@ public partial class MainViewModel : ObservableObject
         if (File.Exists(path))
         {
             LastPlanPath = path;
-            PlanJsonPreview = File.ReadAllText(path, Encoding.UTF8);
+            var text = File.ReadAllText(path, Encoding.UTF8);
+            PlanJsonPreview = text;
+            TryPopulatePreflightFromPlan(text);
         }
     }
 
@@ -750,35 +1020,75 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    private void TryPopulatePreflightFromPlan(string planJson)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(planJson);
+            var root = doc.RootElement;
+            if (!TryGetProperty(root, "Preflight", out var preflight) || preflight.ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            var errors = GetInt(preflight, "ErrorCount");
+            var warnings = GetInt(preflight, "WarnCount");
+            var infos = GetInt(preflight, "InfoCount");
+
+            PreflightIssues.Clear();
+            if (TryGetProperty(preflight, "Issues", out var issues) && issues.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var it in issues.EnumerateArray())
+                {
+                    var severity = GetString(it, "Severity");
+                    var code = GetString(it, "Code");
+                    var message = GetString(it, "Message");
+                    PreflightIssues.Add(new PipelineIssue
+                    {
+                        Severity = NormalizeSeverity(severity),
+                        Code = code,
+                        Message = message
+                    });
+                }
+            }
+
+            RefreshPreflightSummaryFromIssues(errors, warnings, infos);
+        }
+        catch
+        {
+            // Keep previous UI state when latest plan JSON can't be parsed.
+        }
+    }
+
     private void LoadJsonEditor(string path, Action<string> assign)
     {
         if (!File.Exists(path))
         {
-            ShowError("File not found: " + path);
+            ShowError(LF("Msg.FileNotFoundFmt", path));
             return;
         }
         assign(File.ReadAllText(path, Encoding.UTF8));
-        AppendLog("Loaded file: " + path);
+        AppendLog(LF("Msg.LoadedFileFmt", path));
     }
 
     private void SaveJsonEditor(string path, string jsonText)
     {
         if (!ValidateJsonText(jsonText, out var error))
         {
-            ShowError("JSON invalid: " + error);
+            ShowError(LF("Msg.JsonInvalidFmt", error));
             return;
         }
         var dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrWhiteSpace(dir)) Directory.CreateDirectory(dir);
         File.WriteAllText(path, JsonNode.Parse(jsonText)!.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.UTF8);
-        AppendLog("Saved file: " + path);
+        AppendLog(LF("Msg.SavedFileFmt", path));
     }
 
     private void LoadDependenciesFromFile()
     {
         if (!File.Exists(DepsConfigPath))
         {
-            ShowError("File not found: " + DepsConfigPath);
+            ShowError(LF("Msg.FileNotFoundFmt", DepsConfigPath));
             return;
         }
 
@@ -805,7 +1115,7 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ShowError("Dependencies JSON parse failed: " + ex.Message);
+            ShowError(LF("Msg.DepsParseFailedFmt", ex.Message));
         }
     }
 
@@ -845,7 +1155,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (!File.Exists(ConfigPath))
         {
-            ShowError("File not found: " + ConfigPath);
+            ShowError(LF("Msg.FileNotFoundFmt", ConfigPath));
             return;
         }
 
@@ -921,7 +1231,7 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ShowError("Pipeline config parse failed: " + ex.Message);
+            ShowError(LF("Msg.ConfigParseFailedFmt", ex.Message));
         }
     }
 
@@ -1141,7 +1451,7 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ShowError("Failed to open URL: " + ex.Message);
+            ShowError(LF("Msg.OpenUrlFailedFmt", ex.Message));
         }
     }
 
@@ -1150,7 +1460,7 @@ public partial class MainViewModel : ObservableObject
         var template = Path.Combine(_repoRoot, "manga_epub_automation.deps.template.json");
         if (!File.Exists(template))
         {
-            ShowError("Template not found: " + template);
+            ShowError(LF("Msg.TemplateNotFoundFmt", template));
             return;
         }
         if (File.Exists(DepsConfigPath) && !AskYesNo("Deps file exists. Overwrite from template?", "Init Deps")) return;
@@ -1163,7 +1473,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (!File.Exists(ScriptPath))
         {
-            ShowError("Script not found.");
+            ShowError(L("Msg.ScriptNotFound"));
             return;
         }
         _ = Task.Run(async () =>
@@ -1177,7 +1487,7 @@ public partial class MainViewModel : ObservableObject
                 CancellationToken.None);
             RunOnUi(() =>
             {
-                AppendLog("InitConfig exit code: " + result.ExitCode);
+                AppendLog(LF("Msg.InitConfigExitFmt", result.ExitCode));
                 if (File.Exists(ConfigPath)) LoadPipelineConfigFromFile();
             });
         });
@@ -1198,7 +1508,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(MergeOrderFilePath))
         {
-            ShowError("MergeOrderFilePath is empty.");
+            ShowError(L("Msg.MergeOrderPathEmpty"));
             return;
         }
         var root = new JsonObject
@@ -1208,7 +1518,7 @@ public partial class MainViewModel : ObservableObject
         };
         Directory.CreateDirectory(Path.GetDirectoryName(MergeOrderFilePath)!);
         File.WriteAllText(MergeOrderFilePath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.UTF8);
-        AppendLog("Saved merge order: " + MergeOrderFilePath);
+        AppendLog(LF("Msg.MergeOrderSavedFmt", MergeOrderFilePath));
     }
 
     private async Task GenerateMergeOrderTemplateAsync()
@@ -1220,7 +1530,7 @@ public partial class MainViewModel : ObservableObject
         }
         if (MergePreviewChapters.Count == 0)
         {
-            ShowError("No merge preview data available.");
+            ShowError(L("Msg.MergePreviewEmpty"));
             return;
         }
         if (string.IsNullOrWhiteSpace(MergeOrderFilePath))
@@ -1266,7 +1576,7 @@ public partial class MainViewModel : ObservableObject
         chapters = new List<string>();
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
-            error = "Merge order file not found.";
+            error = LF("Msg.FileNotFoundFmt", path);
             return false;
         }
         try
@@ -1275,7 +1585,7 @@ public partial class MainViewModel : ObservableObject
             var array = root?["chapters"]?.AsArray();
             if (array is null)
             {
-                error = "merge order missing chapters[].";
+                error = L("Msg.MergeOrderMissingChapters");
                 return false;
             }
             foreach (var item in array)
@@ -1299,4 +1609,28 @@ public partial class MainViewModel : ObservableObject
         if (System.Windows.Application.Current.Dispatcher.CheckAccess()) action();
         else System.Windows.Application.Current.Dispatcher.Invoke(action);
     }
+
+    private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!string.Equals(e.PropertyName, "Item[]", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        RunOnUi(() =>
+        {
+            if (!IsRunning)
+            {
+                RunStatusText = L("Status.Idle");
+            }
+            if (PreflightIssues.Count == 0)
+            {
+                PreflightSummaryText = L("Status.NoPreflight");
+            }
+        });
+    }
+
+    private static string L(string key) => Loc.Get(key);
+
+    private static string LF(string key, params object[] args) => Loc.Format(key, args);
 }

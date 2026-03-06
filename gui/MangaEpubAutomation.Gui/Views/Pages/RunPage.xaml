@@ -4,6 +4,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:MangaEpubAutomation.Gui"
       xmlns:behaviors="clr-namespace:MangaEpubAutomation.Gui.Behaviors"
       mc:Ignorable="d"
       Title="Run">
@@ -13,7 +14,7 @@
             <StackPanel>
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <StackPanel>
-                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Workspace Paths" />
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.WorkspacePaths]}" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="170" />
@@ -29,52 +30,52 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="ScriptPath" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.ScriptPath]}" />
                             <TextBox Grid.Row="0"
                                      Grid.Column="1"
                                      Margin="0,4,8,4"
                                      Text="{Binding ScriptPath, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="PowerShell pipeline script path." />
-                            <ui:Button Grid.Row="0" Grid.Column="2" Command="{Binding BrowseScriptPathCommand}" Content="Browse" />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.ScriptPath]}" />
+                            <ui:Button Grid.Row="0" Grid.Column="2" Command="{Binding BrowseScriptPathCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Browse]}" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="TitleRoot" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.TitleRoot]}" />
                             <TextBox Grid.Row="1"
                                      Grid.Column="1"
                                      Margin="0,4,8,4"
                                      Text="{Binding TitleRoot, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Root folder of one title. Source and output folders are derived from here." />
-                            <ui:Button Grid.Row="1" Grid.Column="2" Command="{Binding BrowseTitleRootCommand}" Content="Browse" />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.TitleRoot]}" />
+                            <ui:Button Grid.Row="1" Grid.Column="2" Command="{Binding BrowseTitleRootCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Browse]}" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="SourceDirName (opt)" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.SourceDirNameOpt]}" />
                             <TextBox Grid.Row="2"
                                      Grid.Column="1"
                                      Margin="0,4,8,4"
                                      Text="{Binding SourceDirName, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Optional manual source folder override when multiple candidates exist." />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.SourceDirName]}" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="DepsConfigPath" />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.DepsConfigPath]}" />
                             <TextBox Grid.Row="3"
                                      Grid.Column="1"
                                      Margin="0,4,8,4"
                                      Text="{Binding DepsConfigPath, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Dependency config JSON path." />
-                            <ui:Button Grid.Row="3" Grid.Column="2" Command="{Binding BrowseDepsConfigPathCommand}" Content="Browse" />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.DepsConfigPath]}" />
+                            <ui:Button Grid.Row="3" Grid.Column="2" Command="{Binding BrowseDepsConfigPathCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Browse]}" />
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="ConfigPath" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.ConfigPath]}" />
                             <TextBox Grid.Row="4"
                                      Grid.Column="1"
                                      Margin="0,4,8,4"
                                      Text="{Binding ConfigPath, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Pipeline config JSON path." />
-                            <ui:Button Grid.Row="4" Grid.Column="2" Command="{Binding BrowsePipelineConfigPathCommand}" Content="Browse" />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.ConfigPath]}" />
+                            <ui:Button Grid.Row="4" Grid.Column="2" Command="{Binding BrowsePipelineConfigPathCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Browse]}" />
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="MergeOrderFilePath" />
+                            <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,8,8,8" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.MergeOrderFilePath]}" />
                             <TextBox Grid.Row="5"
                                      Grid.Column="1"
                                      Margin="0,4,8,4"
                                      Text="{Binding MergeOrderFilePath, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Optional explicit chapter order file for merge stage." />
-                            <ui:Button Grid.Row="5" Grid.Column="2" Command="{Binding BrowseMergeOrderFilePathCommand}" Content="Browse" />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.MergeOrderFilePath]}" />
+                            <ui:Button Grid.Row="5" Grid.Column="2" Command="{Binding BrowseMergeOrderFilePathCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Browse]}" />
                         </Grid>
                     </StackPanel>
                 </ui:Card>
@@ -87,76 +88,79 @@
 
                     <ui:Card Grid.Column="0" Margin="0,0,6,0" Padding="14">
                         <StackPanel>
-                            <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Runtime Settings" />
+                            <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.RuntimeSettings]}" />
                             <WrapPanel Margin="0,0,0,8">
-                                <TextBlock Width="110" VerticalAlignment="Center" Text="UpscaleFactor" />
+                                <TextBlock Width="110" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.UpscaleFactor]}" />
                                 <ComboBox Width="120"
                                           ItemsSource="{Binding UpscaleFactorOptions}"
                                           SelectedItem="{Binding UpscaleFactor}"
-                                          ToolTip="Upscale factor. Allowed values: 1, 2, 3, 4." />
-                                <TextBlock Width="80" Margin="20,0,0,0" VerticalAlignment="Center" Text="Format" />
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.UpscaleFactor]}" />
+                                <TextBlock Width="80" Margin="20,0,0,0" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Format]}" />
                                 <ComboBox Width="120"
                                           ItemsSource="{Binding OutputFormatOptions}"
                                           SelectedItem="{Binding OutputFormat}"
-                                          ToolTip="Output image format for the upscale stage." />
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.Format]}" />
                             </WrapPanel>
                             <WrapPanel Margin="0,0,0,8">
-                                <TextBlock Width="110" VerticalAlignment="Center" Text="LossyQuality" />
+                                <TextBlock Width="110" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.LossyQuality]}" />
                                 <TextBox Width="120"
                                          Text="{Binding LossyQuality, UpdateSourceTrigger=PropertyChanged}"
                                          behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
                                          behaviors:NumericTextBoxWheelBehavior.Minimum="1"
                                          behaviors:NumericTextBoxWheelBehavior.Maximum="100"
-                                         ToolTip="Lossy quality from 1 to 100. Higher means larger files." />
-                                <TextBlock Width="80" Margin="20,0,0,0" VerticalAlignment="Center" Text="LogLevel" />
+                                         ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.LossyQuality]}" />
+                                <TextBlock Width="80" Margin="20,0,0,0" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.LogLevel]}" />
                                 <ComboBox Width="120"
                                           ItemsSource="{Binding LogLevelOptions}"
                                           SelectedItem="{Binding LogLevel}"
-                                          ToolTip="info: concise output, debug: verbose diagnostics." />
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.LogLevel]}" />
                             </WrapPanel>
                             <WrapPanel>
                                 <CheckBox Margin="0,0,16,8"
                                           IsChecked="{Binding DryRun}"
-                                          Content="DryRun"
-                                          ToolTip="Preview only. Do not write files." />
+                                          Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.DryRun]}"
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.DryRun]}" />
                                 <CheckBox Margin="0,0,16,8"
                                           IsChecked="{Binding NoUpscaleProgress}"
-                                          Content="NoUpscaleProgress"
-                                          ToolTip="Disable realtime upscale progress updates." />
+                                          Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.NoUpscaleProgress]}"
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.NoUpscaleProgress]}" />
                                 <CheckBox Margin="0,0,16,8"
                                           IsChecked="{Binding FailOnPreflightWarnings}"
-                                          Content="FailOnPreflightWarnings"
-                                          ToolTip="Treat warnings as blocking errors." />
+                                          Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.FailOnWarnings]}"
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.FailOnWarnings]}" />
                                 <CheckBox Margin="0,0,16,8"
                                           IsChecked="{Binding MergePreviewCompact}"
-                                          Content="MergePreviewCompact"
-                                          ToolTip="Compact merge preview instead of full chapter list." />
+                                          Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.MergePreviewCompact]}"
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.MergePreviewCompact]}" />
                             </WrapPanel>
                         </StackPanel>
                     </ui:Card>
 
                     <ui:Card Grid.Column="1" Margin="6,0,0,0" Padding="14">
                         <StackPanel>
-                            <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Stages &amp; Actions" />
+                            <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.StagesActions]}" />
                             <WrapPanel Margin="0,0,0,8">
                                 <CheckBox Margin="0,0,16,8"
                                           IsChecked="{Binding RunUpscale}"
-                                          Content="Upscale"
-                                          ToolTip="Run image super-resolution stage." />
+                                          Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.StageUpscale]}"
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.StageUpscale]}" />
                                 <CheckBox Margin="0,0,16,8"
                                           IsChecked="{Binding RunEpubPackaging}"
-                                          Content="Epub"
-                                          ToolTip="Run per-chapter EPUB packaging stage." />
+                                          Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.StageEpub]}"
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.StageEpub]}" />
                                 <CheckBox Margin="0,0,16,8"
                                           IsChecked="{Binding RunMergedEpub}"
-                                          Content="Merge"
-                                          ToolTip="Run merged EPUB stage for default chapters." />
+                                          Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.StageMerge]}"
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.StageMerge]}" />
                             </WrapPanel>
                             <WrapPanel Margin="0,6,0,0">
-                                <ui:Button Margin="0,0,10,8" Command="{Binding GeneratePlanCommand}" Content="Generate Plan" />
-                                <ui:Button Margin="0,0,10,8" Command="{Binding ExecuteRunCommand}" Content="Run Pipeline" />
-                                <ui:Button Margin="0,0,10,8" Command="{Binding CancelRunCommand}" Content="Cancel" />
-                                <ui:Button Margin="0,0,10,8" Command="{Binding LoadLatestArtifactsCommand}" Content="Load Latest Artifacts" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding GeneratePlanCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.GeneratePlan]}" />
+                                <ui:Button Margin="0,0,10,8"
+                                           Command="{Binding ExecuteRunCommand}"
+                                           Appearance="Primary"
+                                           Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.RunPipeline]}" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding CancelRunCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Cancel]}" />
+                                <ui:Button Margin="0,0,10,8" Command="{Binding LoadLatestArtifactsCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.LoadLatestArtifacts]}" />
                             </WrapPanel>
                         </StackPanel>
                     </ui:Card>
@@ -164,12 +168,19 @@
 
                 <ui:Card Margin="0,0,0,10" Padding="14">
                     <StackPanel>
-                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="Live Progress" />
+                        <TextBlock Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.LiveProgress]}" />
                         <TextBlock Margin="0,0,0,8" FontWeight="SemiBold" Text="{Binding PreflightSummaryText}" />
                         <TextBlock Text="{Binding UpscaleStatusText}" />
                         <ProgressBar Height="14" Margin="0,3,0,10" Minimum="0" Maximum="100" Value="{Binding UpscalePercent}" />
                         <TextBlock Text="{Binding EpubStatusText}" />
-                        <ProgressBar Height="14" Margin="0,3,0,0" Minimum="0" Maximum="100" Value="{Binding EpubPercent}" />
+                        <ProgressBar Height="14" Margin="0,3,0,10" Minimum="0" Maximum="100" Value="{Binding EpubPercent}" />
+                        <TextBlock Text="{Binding MergeStatusText}" />
+                        <ProgressBar Height="14"
+                                     Margin="0,3,0,0"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="{Binding MergePercent}"
+                                     IsIndeterminate="{Binding MergeProgressIndeterminate}" />
                     </StackPanel>
                 </ui:Card>
 
@@ -179,38 +190,43 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <ui:Card Grid.Column="0" Margin="0,0,6,0" Padding="14">
+                    <ui:Card Grid.Column="0" Margin="0,0,6,0" Padding="14" Height="340" VerticalAlignment="Top">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Margin="0,0,0,8" FontSize="16" FontWeight="SemiBold" Text="Preflight Issues" />
+                            <TextBlock Grid.Row="0" Margin="0,0,0,8" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.PreflightIssues]}" />
                             <DataGrid Grid.Row="1" ItemsSource="{Binding PreflightIssues}" AutoGenerateColumns="False" IsReadOnly="True">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="100" />
-                                    <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="170" />
-                                    <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                                    <DataGridTextColumn Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Severity]}" Binding="{Binding Severity}" Width="100" />
+                                    <DataGridTextColumn Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Code]}" Binding="{Binding Code}" Width="170" />
+                                    <DataGridTextColumn Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Message]}" Binding="{Binding Message}" Width="*" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>
                     </ui:Card>
 
-                    <ui:Card Grid.Column="1" Margin="6,0,0,0" Padding="14">
+                    <ui:Card Grid.Column="1" Margin="6,0,0,0" Padding="14" Height="340" VerticalAlignment="Top">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Margin="0,0,0,8" FontSize="16" FontWeight="SemiBold" Text="Merge Preview" />
-                            <TextBlock Grid.Row="1" Margin="0,0,0,8" Text="{Binding MergeTargetPath}" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="0" Margin="0,0,0,8" FontSize="16" FontWeight="SemiBold" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.MergePreview]}" />
+                            <TextBlock Grid.Row="1"
+                                       Margin="0,0,0,8"
+                                       Text="{Binding MergeTargetPath}"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding MergeTargetPath}" />
                             <DataGrid Grid.Row="2" ItemsSource="{Binding MergePreviewChapters}" AutoGenerateColumns="False" IsReadOnly="True">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="45" />
-                                    <DataGridTextColumn Header="Chapter" Binding="{Binding Chapter}" Width="120" />
-                                    <DataGridTextColumn Header="Order" Binding="{Binding Order}" Width="85" />
-                                    <DataGridTextColumn Header="EpubPath" Binding="{Binding EpubPath}" Width="*" />
+                                    <DataGridTextColumn Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Chapter]}" Binding="{Binding Chapter}" Width="120" />
+                                    <DataGridTextColumn Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Order]}" Binding="{Binding Order}" Width="85" />
+                                    <DataGridTextColumn Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.EpubPath]}" Binding="{Binding EpubPath}" Width="*" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>

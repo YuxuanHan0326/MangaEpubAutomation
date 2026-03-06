@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using MangaEpubAutomation.Gui.Models;
 
@@ -22,7 +23,9 @@ public sealed class ProcessRunner
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            CreateNoWindow = true
+            CreateNoWindow = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
         };
 
         startInfo.ArgumentList.Add("-ExecutionPolicy");
@@ -59,11 +62,25 @@ public sealed class ProcessRunner
 
             if (TryParsePipelineEvent(line, out var envelope))
             {
-                onEvent?.Invoke(envelope);
+                try
+                {
+                    onEvent?.Invoke(envelope);
+                }
+                catch (Exception ex)
+                {
+                    onStderr?.Invoke("[gui-event-callback-error] " + ex.Message);
+                }
                 return;
             }
 
-            onStdout?.Invoke(line);
+            try
+            {
+                onStdout?.Invoke(line);
+            }
+            catch (Exception ex)
+            {
+                onStderr?.Invoke("[gui-stdout-callback-error] " + ex.Message);
+            }
         };
 
         process.ErrorDataReceived += (_, e) =>
@@ -74,7 +91,14 @@ public sealed class ProcessRunner
                 return;
             }
 
-            onStderr?.Invoke(line);
+            try
+            {
+                onStderr?.Invoke(line);
+            }
+            catch
+            {
+                // Ignore stderr callback exceptions.
+            }
         };
 
         if (!process.Start())
@@ -101,7 +125,9 @@ public sealed class ProcessRunner
             }
         });
 
-        var exitCode = await exitTcs.Task.ConfigureAwait(false);
+        var waitForExitTask = process.WaitForExitAsync();
+        await Task.WhenAny(exitTcs.Task, waitForExitTask).ConfigureAwait(false);
+        var exitCode = process.HasExited ? process.ExitCode : await exitTcs.Task.ConfigureAwait(false);
 
         try
         {

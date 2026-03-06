@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        LocalizationManager.Instance.SetLanguage("zh-CN");
         ViewModel = new MainViewModel();
         DataContext = ViewModel;
 
@@ -32,7 +33,14 @@ public partial class MainWindow : Window
     {
         if (_isFollowingSystemTheme)
         {
-            SystemThemeWatcher.UnWatch(this);
+            try
+            {
+                SystemThemeWatcher.UnWatch(this);
+            }
+            catch
+            {
+                // Some close paths can fire after window handle teardown.
+            }
             _isFollowingSystemTheme = false;
         }
     }
@@ -42,6 +50,10 @@ public partial class MainWindow : Window
     private void OnDarkThemeClick(object sender, RoutedEventArgs e) => SetTheme(ApplicationTheme.Dark);
 
     private void OnFollowSystemThemeClick(object sender, RoutedEventArgs e) => SetThemeFollowSystem();
+
+    private void OnChineseLanguageClick(object sender, RoutedEventArgs e) => LocalizationManager.Instance.SetLanguage("zh-CN");
+
+    private void OnEnglishLanguageClick(object sender, RoutedEventArgs e) => LocalizationManager.Instance.SetLanguage("en-US");
 
     private void SetThemeFollowSystem()
     {

@@ -4,6 +4,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:MangaEpubAutomation.Gui"
       mc:Ignorable="d"
       Title="LogsAndResult">
     <Grid Margin="12">
@@ -17,20 +18,20 @@
                    Margin="2,0,0,10"
                    FontSize="18"
                    FontWeight="SemiBold"
-                   Text="Logs &amp; Result" />
+                   Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Logs.Title]}" />
 
         <ui:Card Grid.Row="1" Margin="0,0,0,10" Padding="14">
             <WrapPanel>
-                <ui:Button Margin="0,0,10,8" Command="{Binding ClearLogsCommand}" Content="Clear Logs" />
-                <ui:Button Margin="0,0,10,8" Command="{Binding LoadLatestPlanCommand}" Content="Load Latest Plan JSON" />
-                <ui:Button Margin="0,0,10,8" Command="{Binding LoadLatestResultCommand}" Content="Load Latest Result JSON" />
+                <ui:Button Margin="0,0,10,8" Command="{Binding ClearLogsCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Logs.Clear]}" />
+                <ui:Button Margin="0,0,10,8" Command="{Binding LoadLatestPlanCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Logs.LoadLatestPlan]}" />
+                <ui:Button Margin="0,0,10,8" Command="{Binding LoadLatestResultCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Logs.LoadLatestResult]}" />
                 <TextBlock VerticalAlignment="Center" Text="{Binding LastResultPath}" />
             </WrapPanel>
         </ui:Card>
 
         <ui:Card Grid.Row="2" Padding="14">
             <TabControl>
-                <TabItem Header="Live Log">
+                <TabItem Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Logs.LiveLog]}">
                     <TextBox Margin="0,8,0,0"
                              AcceptsReturn="True"
                              IsReadOnly="True"
@@ -41,7 +42,7 @@
                              FontFamily="Consolas"
                              FontSize="12" />
                 </TabItem>
-                <TabItem Header="Plan JSON">
+                <TabItem Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Logs.PlanJson]}">
                     <TextBox Margin="0,8,0,0"
                              AcceptsReturn="True"
                              IsReadOnly="True"
@@ -52,7 +53,7 @@
                              FontFamily="Consolas"
                              FontSize="11" />
                 </TabItem>
-                <TabItem Header="Result JSON">
+                <TabItem Header="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Logs.ResultJson]}">
                     <TextBox Margin="0,8,0,0"
                              AcceptsReturn="True"
                              IsReadOnly="True"

@@ -4,6 +4,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:MangaEpubAutomation.Gui"
       mc:Ignorable="d"
       Title="MergeOrder">
     <Grid Margin="12">
@@ -18,7 +19,7 @@
                    Margin="2,0,0,10"
                    FontSize="18"
                    FontWeight="SemiBold"
-                   Text="Merge Order" />
+                   Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Merge.Title]}" />
 
         <ui:Card Grid.Row="1" Margin="0,0,0,10" Padding="14">
             <Grid>
@@ -27,25 +28,25 @@
                     <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Order File" />
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Merge.OrderFile]}" />
             <TextBox Grid.Column="1" Margin="0,0,8,0" Text="{Binding MergeOrderFilePath, UpdateSourceTrigger=PropertyChanged}" />
-            <ui:Button Grid.Column="2" Margin="0,0,0,0" Command="{Binding BrowseMergeOrderFilePathCommand}" Content="Browse" />
+            <ui:Button Grid.Column="2" Margin="0,0,0,0" Command="{Binding BrowseMergeOrderFilePathCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Browse]}" />
         </Grid>
     </ui:Card>
 
     <ui:Card Grid.Row="2" Margin="0,0,0,10" Padding="14">
         <WrapPanel>
-            <ui:Button Margin="0,0,10,8" Command="{Binding LoadMergeOrderCommand}" Content="Load" />
-            <ui:Button Margin="0,0,10,8" Command="{Binding SaveMergeOrderCommand}" Content="Save" />
-            <ui:Button Margin="0,0,10,8" Command="{Binding GenerateMergeOrderTemplateCommand}" Content="Generate Template" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding LoadMergeOrderCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Load]}" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding SaveMergeOrderCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Save]}" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding GenerateMergeOrderTemplateCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Merge.GenerateTemplate]}" />
             <TextBox Width="260"
                      Margin="0,0,8,8"
                      VerticalAlignment="Center"
                      Text="{Binding NewMergeOrderEntry, UpdateSourceTrigger=PropertyChanged}" />
-            <ui:Button Margin="0,0,10,8" Command="{Binding AddMergeOrderEntryCommand}" Content="Add" />
-            <ui:Button Margin="0,0,10,8" Command="{Binding RemoveMergeOrderEntryCommand}" Content="Remove" />
-            <ui:Button Margin="0,0,10,8" Command="{Binding MoveMergeOrderUpCommand}" Content="Move Up" />
-            <ui:Button Margin="0,0,10,8" Command="{Binding MoveMergeOrderDownCommand}" Content="Move Down" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding AddMergeOrderEntryCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Add]}" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding RemoveMergeOrderEntryCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.Remove]}" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding MoveMergeOrderUpCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.MoveUp]}" />
+            <ui:Button Margin="0,0,10,8" Command="{Binding MoveMergeOrderDownCommand}" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Common.MoveDown]}" />
         </WrapPanel>
     </ui:Card>
 

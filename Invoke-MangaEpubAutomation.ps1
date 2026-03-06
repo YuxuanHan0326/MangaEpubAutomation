@@ -42,6 +42,17 @@ $script:PipelineGuiMode = [bool]$GuiMode
 $script:LatestRunPlanPath = ''
 $script:LatestRunResultPath = ''
 
+# Force UTF-8 for redirected stdout/stderr so GUI event payloads keep CJK text.
+try {
+    $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+    [Console]::InputEncoding = $utf8NoBom
+    [Console]::OutputEncoding = $utf8NoBom
+    $OutputEncoding = $utf8NoBom
+}
+catch {
+    # Non-fatal: keep running even if host does not allow encoding override.
+}
+
 $GroupTankobon = ([char]0x5355).ToString() + ([char]0x884C) + ([char]0x672C) # 单行本
 $GroupDefault = ([char]0x9ED8).ToString() + ([char]0x8A8D) # 默認
 $MetadataJsonName = ([char]0x5143).ToString() + ([char]0x6570) + ([char]0x636E) + '.json' # 元数据.json
@@ -1777,6 +1788,7 @@ function Get-UpscaleProgressSnapshot {
         return [pscustomobject]@{
             Percent = 100
             EffectiveTotal = 0
+            EffectiveProcessTotal = 0
             AvgRate = 0.0
             EtaSeconds = $null
             StatusText = 'done=0/0 processed=0 skipped=0 ETA=<n/a> rate=0.00 img/s'
@@ -1787,18 +1799,24 @@ function Get-UpscaleProgressSnapshot {
     if ($percent -gt 100) { $percent = 100 }
     if ($percent -lt 0) { $percent = 0 }
 
+    $effectiveProcessTotal = [math]::Max(0.0, $effectiveTotal - [double]$SkippedUnits)
+    if ($effectiveProcessTotal -lt [double]$ProcessedUnits) { $effectiveProcessTotal = [double]$ProcessedUnits }
     $safeElapsed = [math]::Max(0.001, $ElapsedSeconds)
-    $rate = [double]$DoneUnits / $safeElapsed
+    $rate = [double]$ProcessedUnits / $safeElapsed
     $eta = $null
-    if ($DoneUnits -ge $EtaMinSamples -and $rate -gt 0.00001) {
-        $remaining = [math]::Max(0.0, $effectiveTotal - [double]$DoneUnits)
+    if ($effectiveProcessTotal -le 0.0) {
+        $eta = $null
+    }
+    elseif ($ProcessedUnits -ge $EtaMinSamples -and $rate -gt 0.00001) {
+        $remaining = [math]::Max(0.0, $effectiveProcessTotal - [double]$ProcessedUnits)
         $eta = $remaining / $rate
     }
-    $etaText = if ($null -eq $eta) { '<estimating>' } else { Format-SecondsAsHms -Seconds $eta }
+    $etaText = if ($effectiveProcessTotal -le 0.0) { '<n/a>' } elseif ($null -eq $eta) { '<estimating>' } else { Format-SecondsAsHms -Seconds $eta }
 
     return [pscustomobject]@{
         Percent = [int]$percent
         EffectiveTotal = [int]$effectiveTotal
+        EffectiveProcessTotal = [int][math]::Round($effectiveProcessTotal)
         AvgRate = [double]$rate
         EtaSeconds = $eta
         StatusText = ("done={0}/{1} processed={2} skipped={3} ETA={4} rate={5:N2} img/s" -f $DoneUnits, [int]$effectiveTotal, $ProcessedUnits, $SkippedUnits, $etaText, $rate)
@@ -1810,6 +1828,7 @@ function Get-EpubPackProgressSnapshot {
     param(
         [int]$DoneUnits,
         [int]$TotalUnits,
+        [int]$ProcessedUnits,
         [int]$PackedUnits,
         [int]$SkippedUnits,
         [int]$FailedUnits,
@@ -1828,16 +1847,21 @@ function Get-EpubPackProgressSnapshot {
     $safeDone = [math]::Max(0, [math]::Min($DoneUnits, $safeTotal))
     $percent = [math]::Floor((100.0 * $safeDone) / $safeTotal)
     $etaText = '<estimating>'
+    $effectiveProcessTotal = [math]::Max(0.0, [double]$safeTotal - [double]$SkippedUnits)
+    if ($effectiveProcessTotal -lt [double]$ProcessedUnits) { $effectiveProcessTotal = [double]$ProcessedUnits }
     $safeElapsed = [math]::Max(0.001, $ElapsedSeconds)
-    $rate = [double]$safeDone / $safeElapsed
-    if ($safeDone -gt 0 -and $rate -gt 0.00001) {
-        $remaining = [math]::Max(0.0, [double]$safeTotal - [double]$safeDone)
+    $rate = [double]$ProcessedUnits / $safeElapsed
+    if ($effectiveProcessTotal -le 0.0) {
+        $etaText = '<n/a>'
+    }
+    elseif ($ProcessedUnits -gt 0 -and $rate -gt 0.00001) {
+        $remaining = [math]::Max(0.0, $effectiveProcessTotal - [double]$ProcessedUnits)
         $etaText = Format-SecondsAsHms -Seconds ($remaining / $rate)
     }
 
     return [pscustomobject]@{
         Percent = [int]$percent
-        StatusText = ("done={0}/{1} packed={2} skipped={3} failed={4} ETA={5}" -f $safeDone, $safeTotal, $PackedUnits, $SkippedUnits, $FailedUnits, $etaText)
+        StatusText = ("done={0}/{1} processed={2} packed={3} skipped={4} failed={5} ETA={6}" -f $safeDone, $safeTotal, $ProcessedUnits, $PackedUnits, $SkippedUnits, $FailedUnits, $etaText)
         EtaText = $etaText
     }
 }
@@ -2820,8 +2844,9 @@ if ((-not $runUpscaleStage -or $backendExitCode -eq 0) -and $runEpubStage) {
                 $epubSkipped += 1
                 Write-StageMessage -Message "EPUB_SKIP: $targetPath" -LogPath $logPath -DebugOnly
                 $epubDone = $epubPacked + $epubSkipped + $epubFailed
+                $epubProcessed = $epubPacked + $epubFailed
                 if ($epubProgressEnabled) {
-                    $epubSnap = Get-EpubPackProgressSnapshot -DoneUnits $epubDone -TotalUnits $epubStageEstimate.Planned -PackedUnits $epubPacked -SkippedUnits $epubSkipped -FailedUnits $epubFailed -ElapsedSeconds $epubProgressStopwatch.Elapsed.TotalSeconds
+                    $epubSnap = Get-EpubPackProgressSnapshot -DoneUnits $epubDone -TotalUnits $epubStageEstimate.Planned -ProcessedUnits $epubProcessed -PackedUnits $epubPacked -SkippedUnits $epubSkipped -FailedUnits $epubFailed -ElapsedSeconds $epubProgressStopwatch.Elapsed.TotalSeconds
                     $epubStatus = ("{0} | {1}" -f $epubTitle, $epubSnap.StatusText)
                     if ($script:PipelineGuiMode) {
                         Write-GuiEvent -Type 'epub_progress' -Data ([pscustomobject]@{
@@ -2853,8 +2878,9 @@ if ((-not $runUpscaleStage -or $backendExitCode -eq 0) -and $runEpubStage) {
                 $epubFailed += 1
                 Write-StageMessage -Message "EPUB_FAIL: exit=$kccCode target=$targetPath" -LogPath $logPath -Warning
                 $epubDone = $epubPacked + $epubSkipped + $epubFailed
+                $epubProcessed = $epubPacked + $epubFailed
                 if ($epubProgressEnabled) {
-                    $epubSnap = Get-EpubPackProgressSnapshot -DoneUnits $epubDone -TotalUnits $epubStageEstimate.Planned -PackedUnits $epubPacked -SkippedUnits $epubSkipped -FailedUnits $epubFailed -ElapsedSeconds $epubProgressStopwatch.Elapsed.TotalSeconds
+                    $epubSnap = Get-EpubPackProgressSnapshot -DoneUnits $epubDone -TotalUnits $epubStageEstimate.Planned -ProcessedUnits $epubProcessed -PackedUnits $epubPacked -SkippedUnits $epubSkipped -FailedUnits $epubFailed -ElapsedSeconds $epubProgressStopwatch.Elapsed.TotalSeconds
                     $epubStatus = ("{0} | {1}" -f $epubTitle, $epubSnap.StatusText)
                     if ($script:PipelineGuiMode) {
                         Write-GuiEvent -Type 'epub_progress' -Data ([pscustomobject]@{
@@ -2888,8 +2914,9 @@ if ((-not $runUpscaleStage -or $backendExitCode -eq 0) -and $runEpubStage) {
             }
 
             $epubDone = $epubPacked + $epubSkipped + $epubFailed
+            $epubProcessed = $epubPacked + $epubFailed
             if ($epubProgressEnabled) {
-                $epubSnap = Get-EpubPackProgressSnapshot -DoneUnits $epubDone -TotalUnits $epubStageEstimate.Planned -PackedUnits $epubPacked -SkippedUnits $epubSkipped -FailedUnits $epubFailed -ElapsedSeconds $epubProgressStopwatch.Elapsed.TotalSeconds
+                $epubSnap = Get-EpubPackProgressSnapshot -DoneUnits $epubDone -TotalUnits $epubStageEstimate.Planned -ProcessedUnits $epubProcessed -PackedUnits $epubPacked -SkippedUnits $epubSkipped -FailedUnits $epubFailed -ElapsedSeconds $epubProgressStopwatch.Elapsed.TotalSeconds
                 $epubStatus = ("{0} | {1}" -f $epubTitle, $epubSnap.StatusText)
                 if ($script:PipelineGuiMode) {
                     Write-GuiEvent -Type 'epub_progress' -Data ([pscustomobject]@{
@@ -2916,7 +2943,8 @@ if ((-not $runUpscaleStage -or $backendExitCode -eq 0) -and $runEpubStage) {
     $epubProgressStopwatch.Stop()
     if ($epubProgressEnabled) {
         $epubDone = $epubPacked + $epubSkipped + $epubFailed
-        $epubSnap = Get-EpubPackProgressSnapshot -DoneUnits $epubDone -TotalUnits $epubStageEstimate.Planned -PackedUnits $epubPacked -SkippedUnits $epubSkipped -FailedUnits $epubFailed -ElapsedSeconds $epubProgressStopwatch.Elapsed.TotalSeconds
+        $epubProcessed = $epubPacked + $epubFailed
+        $epubSnap = Get-EpubPackProgressSnapshot -DoneUnits $epubDone -TotalUnits $epubStageEstimate.Planned -ProcessedUnits $epubProcessed -PackedUnits $epubPacked -SkippedUnits $epubSkipped -FailedUnits $epubFailed -ElapsedSeconds $epubProgressStopwatch.Elapsed.TotalSeconds
         $epubStatus = $epubSnap.StatusText
         if ($script:PipelineGuiMode) {
             Write-GuiEvent -Type 'epub_progress' -Data ([pscustomobject]@{

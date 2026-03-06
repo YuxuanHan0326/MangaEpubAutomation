@@ -10,12 +10,27 @@
                 <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
 
+            <FontFamily x:Key="AppUiFontFamily">pack://application:,,,/Assets/Fonts/#Source Han Sans SC</FontFamily>
+
+            <Style TargetType="{x:Type Window}">
+                <Setter Property="FontFamily" Value="{StaticResource AppUiFontFamily}" />
+                <Setter Property="UseLayoutRounding" Value="True" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+                <Setter Property="TextOptions.TextRenderingMode" Value="Auto" />
+            </Style>
+
+            <Style TargetType="{x:Type Page}">
+                <Setter Property="FontFamily" Value="{StaticResource AppUiFontFamily}" />
+            </Style>
+
             <Style TargetType="{x:Type ToolTip}">
+                <Setter Property="FontFamily" Value="{StaticResource AppUiFontFamily}" />
                 <Setter Property="UseLayoutRounding" Value="True" />
                 <Setter Property="SnapsToDevicePixels" Value="True" />
                 <Setter Property="HasDropShadow" Value="False" />
                 <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
-                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
+                <Setter Property="TextOptions.TextRenderingMode" Value="Auto" />
                 <Setter Property="TextOptions.TextHintingMode" Value="Fixed" />
                 <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled" />
             </Style>
