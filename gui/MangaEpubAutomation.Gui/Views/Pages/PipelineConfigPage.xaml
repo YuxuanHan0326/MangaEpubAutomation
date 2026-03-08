@@ -5,7 +5,6 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:local="clr-namespace:MangaEpubAutomation.Gui"
-      xmlns:behaviors="clr-namespace:MangaEpubAutomation.Gui.Behaviors"
       mc:Ignorable="d"
       Title="PipelineConfig">
     <Grid Margin="12">
@@ -65,10 +64,8 @@
                             <TextBlock Width="180" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.UpscaleScaleFactor]}" />
                             <TextBox Width="100"
                                      Text="{Binding CfgUpscaleScaleFactor, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.UpscaleScaleFactor]}"
-                                     behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
-                                     behaviors:NumericTextBoxWheelBehavior.Minimum="1"
-                                     behaviors:NumericTextBoxWheelBehavior.Maximum="4" />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.UpscaleScaleFactor]}" />
+
                             <TextBlock Width="120" Margin="20,0,0,0" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.OutputFormat]}" />
                             <TextBox Width="120" Text="{Binding CfgOutputFormat, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.OutputFormat]}" />
                         </WrapPanel>
@@ -76,10 +73,15 @@
                             <TextBlock Width="180" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.LossyCompressionQuality]}" />
                             <TextBox Width="100"
                                      Text="{Binding CfgLossyCompressionQuality, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.LossyCompressionQuality]}"
-                                     behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
-                                     behaviors:NumericTextBoxWheelBehavior.Minimum="1"
-                                     behaviors:NumericTextBoxWheelBehavior.Maximum="100" />
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.LossyCompressionQuality]}" />
+
+                        </WrapPanel>
+                        <WrapPanel Margin="0,8,0,0">
+                            <TextBlock Width="180" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.GrayscaleDetectionThreshold]}" />
+                            <TextBox Width="100"
+                                     Text="{Binding CfgGrayscaleDetectionThreshold, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Cfg.Tip.GrayscaleDetectionThreshold]}" />
+
                         </WrapPanel>
                     </StackPanel>
                 </ui:Card>

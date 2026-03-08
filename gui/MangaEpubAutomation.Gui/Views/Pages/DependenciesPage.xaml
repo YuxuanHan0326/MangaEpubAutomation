@@ -5,7 +5,6 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:local="clr-namespace:MangaEpubAutomation.Gui"
-      xmlns:behaviors="clr-namespace:MangaEpubAutomation.Gui.Behaviors"
       mc:Ignorable="d"
       Title="Dependencies">
     <Grid Margin="12">
@@ -72,26 +71,20 @@
                         <WrapPanel Margin="0,0,0,8">
                             <TextBlock Width="220" VerticalAlignment="Center" Text="refresh_seconds" />
                             <TextBox Width="100"
-                                     Text="{Binding DepsRefreshSeconds, UpdateSourceTrigger=PropertyChanged}"
-                                     behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
-                                     behaviors:NumericTextBoxWheelBehavior.Minimum="1"
-                                     behaviors:NumericTextBoxWheelBehavior.Maximum="60" />
+                                     Text="{Binding DepsRefreshSeconds, UpdateSourceTrigger=PropertyChanged}" />
+
                         </WrapPanel>
                         <WrapPanel Margin="0,0,0,8">
                             <TextBlock Width="220" VerticalAlignment="Center" Text="eta_min_samples" />
                             <TextBox Width="100"
-                                     Text="{Binding DepsEtaMinSamples, UpdateSourceTrigger=PropertyChanged}"
-                                     behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
-                                     behaviors:NumericTextBoxWheelBehavior.Minimum="1"
-                                     behaviors:NumericTextBoxWheelBehavior.Maximum="1000" />
+                                     Text="{Binding DepsEtaMinSamples, UpdateSourceTrigger=PropertyChanged}" />
+
                         </WrapPanel>
                         <WrapPanel>
                             <TextBlock Width="220" VerticalAlignment="Center" Text="noninteractive_log_interval_seconds" />
                             <TextBox Width="100"
-                                     Text="{Binding DepsNoninteractiveLogIntervalSeconds, UpdateSourceTrigger=PropertyChanged}"
-                                     behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
-                                     behaviors:NumericTextBoxWheelBehavior.Minimum="1"
-                                     behaviors:NumericTextBoxWheelBehavior.Maximum="3600" />
+                                     Text="{Binding DepsNoninteractiveLogIntervalSeconds, UpdateSourceTrigger=PropertyChanged}" />
+
                         </WrapPanel>
                     </StackPanel>
                 </ui:Card>

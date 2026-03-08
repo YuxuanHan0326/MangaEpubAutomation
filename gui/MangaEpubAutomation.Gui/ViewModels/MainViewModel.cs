@@ -36,6 +36,7 @@ public partial class MainViewModel : ObservableObject
         OutputFormat = "webp";
         LossyQuality = 80;
         LogLevel = "info";
+        ExtraGroupHandlingMode = 0;
         RunUpscale = true;
         RunEpubPackaging = true;
         RunMergedEpub = true;
@@ -51,6 +52,7 @@ public partial class MainViewModel : ObservableObject
         CfgUpscaleScaleFactor = 2;
         CfgOutputFormat = "webp";
         CfgLossyCompressionQuality = 80;
+        CfgGrayscaleDetectionThreshold = 12;
         CfgKccDeviceProfile = "KS";
         CfgKccOutputFormat = "EPUB";
         CfgKccNoKepub = true;
@@ -140,6 +142,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string outputFormat = string.Empty;
     [ObservableProperty] private int lossyQuality;
     [ObservableProperty] private string logLevel = string.Empty;
+    [ObservableProperty] private int extraGroupHandlingMode;
     [ObservableProperty] private bool dryRun;
     [ObservableProperty] private bool noUpscaleProgress;
     [ObservableProperty] private bool failOnPreflightWarnings;
@@ -178,6 +181,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private int cfgUpscaleScaleFactor;
     [ObservableProperty] private string cfgOutputFormat = string.Empty;
     [ObservableProperty] private int cfgLossyCompressionQuality;
+    [ObservableProperty] private int cfgGrayscaleDetectionThreshold;
     [ObservableProperty] private string cfgKccDeviceProfile = string.Empty;
     [ObservableProperty] private string cfgKccOutputFormat = string.Empty;
     [ObservableProperty] private bool cfgKccNoKepub;
@@ -518,21 +522,29 @@ public partial class MainViewModel : ObservableObject
         var args = BuildPipelineArguments(planOnly, effectiveRunUpscale, effectiveRunEpub, effectiveRunMerge);
         AppendLog($"Run: {string.Join(" ", args)}");
 
-        ProcessRunResult result;
+        var stderrTail = new List<string>();
+        ProcessRunResult? result = null;
         try
         {
             result = await _processRunner.RunPowerShellFileAsync(
                 ScriptPath,
                 args,
                 line => RunOnUi(() => AppendLog(line)),
-                line => RunOnUi(() => AppendLog("[stderr] " + line)),
+                line => RunOnUi(() =>
+                {
+                    AppendLog("[stderr] " + line);
+                    if (stderrTail.Count >= 20)
+                    {
+                        stderrTail.RemoveAt(0);
+                    }
+                    stderrTail.Add(line);
+                }),
                 ev => RunOnUi(() => HandlePipelineEvent(ev)),
                 _runningCts.Token).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             RunOnUi(() => ShowError(LF("Msg.LaunchFailedFmt", ex.Message)));
-            result = null!;
         }
 
         RunOnUi(() =>
@@ -542,6 +554,10 @@ public partial class MainViewModel : ObservableObject
                 RunStatusText = result.WasCanceled ? L("Status.Canceled") : LF("Status.ExitFmt", result.ExitCode);
                 AppendLog(LF("Msg.ProcessExitFmt", result.ExitCode));
                 LoadLatestArtifacts();
+                if (!result.WasCanceled && result.ExitCode != 0)
+                {
+                    ShowError(BuildRunFailureMessage(result.ExitCode, stderrTail));
+                }
             }
         });
 
@@ -551,8 +567,71 @@ public partial class MainViewModel : ObservableObject
         return result;
     }
 
+    // Build user-facing failure summary so non-zero exits are visible without
+    // manually opening logs.
+    private string BuildRunFailureMessage(int exitCode, IReadOnlyList<string> stderrTail)
+    {
+        var lines = new List<string>
+        {
+            LF("Msg.ProcessExitFmt", exitCode)
+        };
+
+        if (!string.IsNullOrWhiteSpace(LastResultPath))
+        {
+            lines.Add("latest_run_result.json: " + LastResultPath);
+        }
+
+        var latestLogPath = GetLatestRunLogPath();
+        if (!string.IsNullOrWhiteSpace(latestLogPath))
+        {
+            lines.Add("log: " + latestLogPath);
+        }
+
+        if (stderrTail.Count > 0)
+        {
+            lines.Add(string.Empty);
+            lines.Add("stderr:");
+            foreach (var item in stderrTail.Skip(Math.Max(0, stderrTail.Count - 8)))
+            {
+                lines.Add("  " + item);
+            }
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private string GetLatestRunLogPath()
+    {
+        try
+        {
+            var logDir = Path.Combine(_repoRoot, "logs");
+            if (!Directory.Exists(logDir))
+            {
+                return string.Empty;
+            }
+
+            var latest = new DirectoryInfo(logDir)
+                .GetFiles("manga_epub_automation_run_*.log", SearchOption.TopDirectoryOnly)
+                .OrderByDescending(f => f.LastWriteTimeUtc)
+                .FirstOrDefault();
+
+            return latest?.FullName ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
     private List<string> BuildPipelineArguments(bool planOnly, bool runUpscale, bool runEpubPackaging, bool runMergedEpub)
     {
+        var extraGroupModeArg = ExtraGroupHandlingMode switch
+        {
+            1 => "chapter_no_merge",
+            2 => "chapter_merge",
+            _ => "ignore"
+        };
+
         var args = new List<string>
         {
             "-GuiMode",
@@ -561,7 +640,8 @@ public partial class MainViewModel : ObservableObject
             "-UpscaleFactor", UpscaleFactor.ToString(),
             "-OutputFormat", OutputFormat,
             "-LossyQuality", LossyQuality.ToString(),
-            "-LogLevel", LogLevel
+            "-LogLevel", LogLevel,
+            "-ExtraGroupHandlingMode", extraGroupModeArg
         };
         if (!string.IsNullOrWhiteSpace(SourceDirName)) { args.Add("-SourceDirName"); args.Add(SourceDirName); }
         if (!string.IsNullOrWhiteSpace(DepsConfigPath)) { args.Add("-DepsConfigPath"); args.Add(DepsConfigPath); }
@@ -1180,6 +1260,8 @@ public partial class MainViewModel : ObservableObject
             CfgUpscaleScaleFactor = GetJsonInt(manga, "UpscaleScaleFactor", 2);
             CfgOutputFormat = GetJsonString(manga, "OutputFormat", "webp");
             CfgLossyCompressionQuality = GetJsonInt(manga, "LossyCompressionQuality", 80);
+            var workflowOverrides = manga["WorkflowOverrides"]?.AsObject() ?? new JsonObject();
+            CfgGrayscaleDetectionThreshold = Math.Clamp(GetJsonInt(workflowOverrides, "GrayscaleDetectionThreshold", 12), 0, 24);
 
             CfgKccDeviceProfile = GetJsonString(cli, "DeviceProfile", "KS");
             CfgKccOutputFormat = GetJsonString(cli, "OutputFormat", "EPUB");
@@ -1274,7 +1356,10 @@ public partial class MainViewModel : ObservableObject
                 ["UpscaleScaleFactor"] = CfgUpscaleScaleFactor,
                 ["OutputFormat"] = CfgOutputFormat,
                 ["LossyCompressionQuality"] = CfgLossyCompressionQuality,
-                ["WorkflowOverrides"] = new JsonObject()
+                ["WorkflowOverrides"] = new JsonObject
+                {
+                    ["GrayscaleDetectionThreshold"] = Math.Clamp(CfgGrayscaleDetectionThreshold, 0, 24)
+                }
             },
             ["kcc"] = new JsonObject
             {

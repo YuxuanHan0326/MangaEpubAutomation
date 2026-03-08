@@ -66,6 +66,19 @@
         章节元数据.json
 ```
 
+说明：
+
+- `单行本/` 目录是可选的。若不存在会自动跳过单行本阶段，不影响默认章节流程。
+- 若 `默認/` 下混有“数字+卷/巻”目录（例如 `12卷`、`第03巻`），会自动按单行本规则打包并输出到 `<SourceName>-output/`。
+- 若存在除 `默認/`、`单行本/` 之外的其它一级分组目录，会按“话”规则进行章节 EPUB 打包（仅前两阶段），默认不参与总集 merge。
+- 卷判定使用“严格模式”：仅当目录名完整匹配 `第?数字(可小数)+卷/巻`（例如 `第01卷`）才判卷；如 `连载版01`、`01卷附赠漫画`、`第3卷发售纪念` 会按“话/特别篇”处理。
+
+额外分组处理模式（`-ExtraGroupHandlingMode`）：
+
+- `ignore`（默认）：忽略 `默認/单行本` 之外的一级目录
+- `chapter_no_merge`：参照“话”处理（打包章节 EPUB），但不参与 merge
+- `chapter_merge`：参照“话”处理并允许 merge；输出名为 `作品名 - 文件夹名.epub`
+
 ## 输出目录约定
 
 ```text
@@ -78,6 +91,10 @@
     单行本/
       <卷目录>/
         *-upscaled.webp|png|jpeg|avif
+    <其它分组>/
+      <章节目录>/
+        *-upscaled.webp|png|jpeg|avif
+      <章节目录>.epub
 
   <SourceName>-output/
     <卷epub>.epub
@@ -130,6 +147,9 @@ powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -Title
 
 # 仅总集合并
 powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -TitleRoot "<TitleRoot>" -SkipUpscale -SkipEpubPackaging
+
+# 额外分组：按话处理并允许各自合并（作品名 - 文件夹名.epub）
+powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -TitleRoot "<TitleRoot>" -ExtraGroupHandlingMode chapter_merge
 ```
 
 ## Merge 显式顺序文件
@@ -172,6 +192,17 @@ dotnet run --project .\gui\MangaEpubAutomation.Gui\MangaEpubAutomation.Gui.cspro
 - `latest_run_result.json`
 
 GUI 通过 `-GuiMode` 消费 `PIPELINE_EVENT:` 事件流。
+
+## 近期更新
+
+- 支持“仅默认组、无单行本”源目录结构，流程可正常执行。
+- 支持自动识别 `默認/` 中的“卷目录”并按单行本方式处理。
+- 支持处理额外分组目录（非 `默認/单行本`）：按话打包章节 EPUB，不参与 merge。
+- 总集 EPUB 命名优化：优先用章节名中可解析的“数字+话/話”作为范围端点，避免 `最终话` 等特殊命名导致范围偏差。
+- 新增 MangaJaNai 灰度检测阈值配置（`WorkflowOverrides.GrayscaleDetectionThreshold`），GUI 可直接设置。
+- 灰度阈值范围统一为 `0-24`（GUI 输入、提示文案、保存时范围校验一致）。
+- GUI 已禁用“鼠标滚轮调整数值”，避免误触导致参数被改动。
+- GUI 在进程非 0 退出时会立即弹窗提示（退出码、`latest_run_result.json`、最新日志路径、stderr 摘要），无需手动翻日志。
 
 ## 开源与合规说明
 

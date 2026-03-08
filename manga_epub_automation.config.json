@@ -1,4 +1,4 @@
-﻿{
+{
   "version": 2,
   "pipeline": {
     "SourceDirSuffixToSkip": "-upscaled",
@@ -16,7 +16,9 @@
     "UpscaleScaleFactor": 2,
     "OutputFormat": "webp",
     "LossyCompressionQuality": 80,
-    "WorkflowOverrides": {}
+    "WorkflowOverrides": {
+      "GrayscaleDetectionThreshold": 12
+    }
   },
   "kcc": {
     "CliOptions": {
@@ -79,4 +81,3 @@
     "MetadataContributor": "manga-epub-automation-merge"
   }
 }
-

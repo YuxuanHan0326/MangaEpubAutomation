@@ -5,7 +5,6 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:local="clr-namespace:MangaEpubAutomation.Gui"
-      xmlns:behaviors="clr-namespace:MangaEpubAutomation.Gui.Behaviors"
       mc:Ignorable="d"
       Title="Run">
     <Grid Margin="12">
@@ -105,15 +104,25 @@
                                 <TextBlock Width="110" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.LossyQuality]}" />
                                 <TextBox Width="120"
                                          Text="{Binding LossyQuality, UpdateSourceTrigger=PropertyChanged}"
-                                         behaviors:NumericTextBoxWheelBehavior.IsEnabled="True"
-                                         behaviors:NumericTextBoxWheelBehavior.Minimum="1"
-                                         behaviors:NumericTextBoxWheelBehavior.Maximum="100"
+
+
                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.LossyQuality]}" />
                                 <TextBlock Width="80" Margin="20,0,0,0" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.LogLevel]}" />
                                 <ComboBox Width="120"
                                           ItemsSource="{Binding LogLevelOptions}"
                                           SelectedItem="{Binding LogLevel}"
                                           ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.LogLevel]}" />
+                            </WrapPanel>
+                            <WrapPanel Margin="0,0,0,8">
+                                <TextBlock Width="110" VerticalAlignment="Center" Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.ExtraGroupsMode]}" />
+                                <ComboBox Width="300"
+                                          SelectedValuePath="Tag"
+                                          SelectedValue="{Binding ExtraGroupHandlingMode}"
+                                          ToolTip="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.Tip.ExtraGroupsMode]}">
+                                    <ComboBoxItem Tag="0" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.ExtraGroupsMode.Ignore]}" />
+                                    <ComboBoxItem Tag="1" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.ExtraGroupsMode.ChapterNoMerge]}" />
+                                    <ComboBoxItem Tag="2" Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Run.ExtraGroupsMode.ChapterMerge]}" />
+                                </ComboBox>
                             </WrapPanel>
                             <WrapPanel>
                                 <CheckBox Margin="0,0,16,8"
