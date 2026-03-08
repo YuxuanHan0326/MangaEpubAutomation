@@ -1,56 +1,43 @@
 # MangaEpubAutomation
 
-面向漫画图片目录的自动化流水线：
+面向漫画资源的自动化工具，提供两条流水线：
 
-1. 图片超分（MangaJaNai backend）
-2. 单章/单卷 EPUB 打包（KCC）
-3. 默认分组章节合并为总集 EPUB（按 `order` 排序）
+1. 目录流水线：图片超分 -> 分章/分卷 EPUB -> 合并大 EPUB  
+2. EPUB 流水线：输入 EPUB（单本/多本/目录递归）-> 图片超分 -> 输出新 EPUB
 
-仓库同时提供：
+同时提供 CLI（PowerShell）和 GUI（WPF + Wpf.Ui）。
 
-- CLI 入口（PowerShell）
-- GUI 前端（WPF + Wpf.Ui）
-
-## 功能特性
-
-- 增量处理：已存在输出自动跳过
-- 可拆分阶段：可单跑超分/打包/合并
-- 合并前预览：支持章节顺序预览与确认
-- 显式顺序覆盖：可用 `merge_order.json` 手动指定合并顺序
-- 计划与结果产物：`run_plan_*.json` / `run_result_*.json`
-
-## 第三方依赖（用户自行安装）
+## 你需要先准备的依赖（用户自行安装）
 
 - CopyManga 下载器（用于准备输入目录）
-  - https://github.com/misaka10843/copymanga-downloader
+  - https://github.com/lanyeeee/copymanga-downloader
 - MangaJaNaiConverterGui（提供 python/backend/models）
   - https://github.com/the-database/MangaJaNaiConverterGui
 - KCC / comic2ebook（用于章节 EPUB 打包）
   - https://github.com/ciromattia/kcc
 
 说明：
+- 本仓库不分发漫画内容、模型文件、KCC/MangaJaNai 本体。
+- 请在 `manga_epub_automation.deps.json` 中填写本机依赖路径。
 
-- 本仓库不分发漫画内容、模型文件和上述依赖本体。
-- `kcc` 可执行文件需用户自行下载并在依赖配置中填写路径。
-
-## 仓库结构
+## 项目结构（核心文件）
 
 ```text
 .
-├─ Invoke-MangaEpubAutomation.ps1
-├─ Invoke-MangaEpubAutomation.cmd
-├─ MergeEpubByOrder.py
-├─ manga_epub_automation.config.json
-├─ manga_epub_automation.settings.json
+├─ Invoke-MangaEpubAutomation.ps1        # 目录流水线入口
+├─ Invoke-EpubUpscalePipeline.ps1        # EPUB 流水线入口
+├─ MergeEpubByOrder.py                   # 合并 EPUB 脚本
+├─ manga_epub_automation.config.json     # 主配置（可调参数）
+├─ manga_epub_automation.settings.json   # MangaJaNai 基础设置模板
 ├─ manga_epub_automation.deps.template.json
 ├─ gui/
 │  └─ MangaEpubAutomation.Gui/
-└─ logs/  # 运行时生成（默认忽略）
+└─ logs/                                 # 运行产物
 ```
 
-## 输入目录约定
+## 输入目录要求（目录流水线）
 
-`-TitleRoot` 指向单作品根目录，期望结构：
+`-TitleRoot` 需指向单作品根目录，常见结构：
 
 ```text
 <TitleRoot>/
@@ -58,85 +45,38 @@
     元数据.json
     默認/
       <章节目录>/
-        *.jpg|*.jpeg|*.png|*.webp|*.avif|*.bmp
-        章节元数据.json
-    单行本/
+        图片文件 + 章节元数据.json
+    单行本/            # 可选
       <卷目录>/
-        *.jpg|*.jpeg|*.png|*.webp|*.avif|*.bmp
-        章节元数据.json
+        图片文件 + 章节元数据.json
 ```
 
-说明：
+关键规则：
+- `单行本/` 不存在是允许的，会自动跳过卷处理。
+- `默認/` 下若出现严格匹配“第xx卷/巻”的目录，会按卷处理。
+- 其他额外分组可用 `-ExtraGroupHandlingMode` 控制（忽略/按话处理/按话并允许 merge）。
 
-- `单行本/` 目录是可选的。若不存在会自动跳过单行本阶段，不影响默认章节流程。
-- 若 `默認/` 下混有“数字+卷/巻”目录（例如 `12卷`、`第03巻`），会自动按单行本规则打包并输出到 `<SourceName>-output/`。
-- 若存在除 `默認/`、`单行本/` 之外的其它一级分组目录，会按“话”规则进行章节 EPUB 打包（仅前两阶段），默认不参与总集 merge。
-- 卷判定使用“严格模式”：仅当目录名完整匹配 `第?数字(可小数)+卷/巻`（例如 `第01卷`）才判卷；如 `连载版01`、`01卷附赠漫画`、`第3卷发售纪念` 会按“话/特别篇”处理。
+## 快速开始（目录流水线 CLI）
 
-额外分组处理模式（`-ExtraGroupHandlingMode`）：
-
-- `ignore`（默认）：忽略 `默認/单行本` 之外的一级目录
-- `chapter_no_merge`：参照“话”处理（打包章节 EPUB），但不参与 merge
-- `chapter_merge`：参照“话”处理并允许 merge；输出名为 `作品名 - 文件夹名.epub`
-
-## 输出目录约定
-
-```text
-<TitleRoot>/
-  <SourceName>-upscaled/
-    默認/
-      <章节目录>/
-        *-upscaled.webp|png|jpeg|avif
-      <章节目录>.epub
-    单行本/
-      <卷目录>/
-        *-upscaled.webp|png|jpeg|avif
-    <其它分组>/
-      <章节目录>/
-        *-upscaled.webp|png|jpeg|avif
-      <章节目录>.epub
-
-  <SourceName>-output/
-    <卷epub>.epub
-    <作品名 - 话范围>.epub
-    .manga_epub_automation_merge_manifest.json
-    .manga_epub_automation_merge_order.json
-```
-
-## 快速开始（CLI）
-
-1. 从模板复制依赖配置：
+1. 复制依赖模板并填写路径：
 
 ```powershell
 Copy-Item .\manga_epub_automation.deps.template.json .\manga_epub_automation.deps.json
 ```
 
-2. 编辑 `manga_epub_automation.deps.json`，填写本机路径：
-
-- `python_exe`
-- `backend_script`
-- `models_dir`
-- `kcc_exe`
-
-3. 先做计划预检：
+2. 先预检：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -TitleRoot "<TitleRoot>" -PlanOnly
 ```
 
-4. DryRun 验证：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -TitleRoot "<TitleRoot>" -DryRun
-```
-
-5. 正式执行：
+3. 正式执行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -TitleRoot "<TitleRoot>"
 ```
 
-## 常见阶段组合
+常用阶段组合：
 
 ```powershell
 # 仅超分
@@ -145,17 +85,57 @@ powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -Title
 # 仅章节 EPUB
 powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -TitleRoot "<TitleRoot>" -SkipUpscale -SkipMergedEpub
 
-# 仅总集合并
+# 仅 merge 大 EPUB
 powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -TitleRoot "<TitleRoot>" -SkipUpscale -SkipEpubPackaging
-
-# 额外分组：按话处理并允许各自合并（作品名 - 文件夹名.epub）
-powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -TitleRoot "<TitleRoot>" -ExtraGroupHandlingMode chapter_merge
 ```
 
-## Merge 显式顺序文件
+## EPUB 超分流水线（CLI）
 
-默认路径：
-`<TitleRoot>\<SourceName>-output\.manga_epub_automation_merge_order.json`
+入口：`Invoke-EpubUpscalePipeline.ps1`
+
+输入模式（二选一）：
+- `-InputEpubPath`：按文件（支持多本）
+- `-InputEpubDirectory`：按目录递归
+
+输出相关：
+- `-OutputDirectory` 可选，不填时默认当前工作目录
+- `-OutputSuffix` 默认 `-upscaled`
+- 需要“无后缀”时，建议用 `-NoOutputSuffix`（比 `-OutputSuffix ""` 更稳定）
+
+示例：
+
+```powershell
+# 单本
+powershell -ExecutionPolicy Bypass -File .\Invoke-EpubUpscalePipeline.ps1 `
+  -InputEpubPath "D:\Comics\Book01.epub" `
+  -PlanOnly
+
+# 多本（powershell -File 建议用 | 拼接）
+powershell -ExecutionPolicy Bypass -File .\Invoke-EpubUpscalePipeline.ps1 `
+  -InputEpubPath "D:\Comics\Book01.epub|D:\Comics\Book02.epub" `
+  -OutputDirectory "D:\Comics\out" `
+  -NoOutputSuffix
+```
+
+## GUI 使用
+
+```powershell
+dotnet restore .\MangaEpubAutomation.Gui.sln
+dotnet run --project .\gui\MangaEpubAutomation.Gui\MangaEpubAutomation.Gui.csproj
+```
+
+重要说明：
+- `Run` 页是目录流水线。
+- `EPUB Pipeline` 页是 EPUB 流水线。
+- 运行前建议先点 `Generate Plan` 看预检和计划。
+
+## 合并顺序覆盖（可选）
+
+默认文件：
+
+```text
+<TitleRoot>\<SourceName>-output\.manga_epub_automation_merge_order.json
+```
 
 格式：
 
@@ -166,49 +146,21 @@ powershell -ExecutionPolicy Bypass -File .\Invoke-MangaEpubAutomation.ps1 -Title
 }
 ```
 
-规则：
+`chapters` 的顺序就是 merge 优先顺序；未覆盖的章节会自动追加。
 
-- `chapters` 的顺序就是 merge 优先顺序
-- 未覆盖章节会按自动排序追加到末尾
-- 文件非法（JSON 或字段错误）会阻断执行
+## 日志与运行产物
 
-## GUI
+`logs/` 会生成：
+- `run_plan_*.json` / `run_result_*.json`（目录流水线）
+- `epub_run_plan_*.json` / `epub_run_result_*.json`（EPUB 流水线）
+- `*_run_*.log`
+- `latest_*.json` 快捷文件
 
-构建并运行：
+## 临时文件行为（EPUB 流水线）
 
-```powershell
-dotnet restore .\MangaEpubAutomation.Gui.sln
-dotnet run --project .\gui\MangaEpubAutomation.Gui\MangaEpubAutomation.Gui.csproj
-```
-
-## 运行产物
-
-`logs/` 目录会生成：
-
-- `run_plan_*.json`
-- `run_result_*.json`
-- `manga_epub_automation_run_*.log`
-- `latest_run_plan.json`
-- `latest_run_result.json`
-
-GUI 通过 `-GuiMode` 消费 `PIPELINE_EVENT:` 事件流。
-
-## 近期更新
-
-- 支持“仅默认组、无单行本”源目录结构，流程可正常执行。
-- 支持自动识别 `默認/` 中的“卷目录”并按单行本方式处理。
-- 支持处理额外分组目录（非 `默認/单行本`）：按话打包章节 EPUB，不参与 merge。
-- 总集 EPUB 命名优化：优先用章节名中可解析的“数字+话/話”作为范围端点，避免 `最终话` 等特殊命名导致范围偏差。
-- 新增 MangaJaNai 灰度检测阈值配置（`WorkflowOverrides.GrayscaleDetectionThreshold`），GUI 可直接设置。
-- 灰度阈值范围统一为 `0-24`（GUI 输入、提示文案、保存时范围校验一致）。
-- GUI 已禁用“鼠标滚轮调整数值”，避免误触导致参数被改动。
-- GUI 在进程非 0 退出时会立即弹窗提示（退出码、`latest_run_result.json`、最新日志路径、stderr 摘要），无需手动翻日志。
-
-## 开源与合规说明
-
-- 本仓库只包含自动化脚本与 GUI 代码。
-- 请确保你有权处理对应漫画资源。
-- 第三方依赖请遵循其各自许可证。
+- 每本 EPUB 会在系统临时目录创建工作区（解包、超分中间结果、重打包）。
+- 成功或失败都会在 `finally` 中自动清理该临时目录。
+- 异常强退时可能残留，可手动清理系统临时目录。
 
 ## License
 

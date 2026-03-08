@@ -25,6 +25,8 @@
         <ui:NavigationView.MenuItems>
             <ui:NavigationViewItem Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Nav.Run]}"
                                    TargetPageType="{x:Type pages:RunPage}" />
+            <ui:NavigationViewItem Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Nav.EpubPipeline]}"
+                                   TargetPageType="{x:Type pages:EpubPipelinePage}" />
             <ui:NavigationViewItem Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Nav.Dependencies]}"
                                    TargetPageType="{x:Type pages:DependenciesPage}" />
             <ui:NavigationViewItem Content="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Nav.PipelineConfig]}"

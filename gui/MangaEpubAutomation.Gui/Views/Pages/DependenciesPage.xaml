@@ -14,6 +14,7 @@
                 <TextBlock Margin="2,0,0,10"
                            FontSize="18"
                            FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                            Text="{Binding Source={x:Static local:LocalizationManager.Instance}, Path=[Dep.Title]}" />
 
                 <ui:Card Margin="0,0,0,10" Padding="14">

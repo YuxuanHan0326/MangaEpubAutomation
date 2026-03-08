@@ -2798,6 +2798,35 @@ function Get-DefaultChapterOrderMap {
 
 
 
+# Apply a deterministic default sort for merge chapter candidates.
+# Rule:
+# 1) chapters with order first
+# 2) numeric order ascending
+# 3) chapter name ascending (stable fallback)
+function Sort-MergeChaptersDefault {
+
+    param([Parameter(Mandatory = $true)][object[]]$Chapters)
+
+    if ($null -eq $Chapters -or $Chapters.Count -eq 0) { return @() }
+
+    return @(
+        $Chapters | Sort-Object -Property `
+            @{ Ascending = $true; Expression = { if (($_.PSObject.Properties.Name -contains 'HasOrder') -and [bool]$_.HasOrder) { 0 } else { 1 } } }, `
+            @{ Ascending = $true; Expression = {
+                    if (($_.PSObject.Properties.Name -contains 'HasOrder') -and [bool]$_.HasOrder) {
+                        $n = Convert-ToNullableDouble -Value $_.Order
+                        if ($null -ne $n) { [double]$n } else { [double]::PositiveInfinity }
+                    }
+                    else {
+                        [double]::PositiveInfinity
+                    }
+                } }, `
+            @{ Ascending = $true; Expression = { [string]$_.ChapterName } }
+    )
+
+}
+
+
 # Construct merged-epub chapter plan, ordering, and target file naming.
 
 function Get-MergedEpubPlan {
@@ -2964,13 +2993,7 @@ function Get-MergedEpubPlan {
 
 
 
-    $sorted = @($chapterCandidates | Sort-Object `
-
-            @{ Expression = { if (($_.PSObject.Properties.Name -contains 'HasOrder') -and $_.HasOrder) { 0 } else { 1 } } }, `
-
-            @{ Expression = { if (($_.PSObject.Properties.Name -contains 'HasOrder') -and $_.HasOrder) { [double]$_.Order } else { [double]::PositiveInfinity } } }, `
-
-            @{ Expression = { [string]$_.ChapterName } })
+    $sorted = @(Sort-MergeChaptersDefault -Chapters @($chapterCandidates))
 
 
 
@@ -3367,6 +3390,13 @@ function Apply-MergeOrderOverrideToPlan {
         $state.Applied = $true
 
         $chapters = @($ordered.ToArray())
+
+    }
+
+    elseif ($chapters.Count -gt 0) {
+
+        # Keep auto mode deterministic even when no explicit order file exists.
+        $chapters = @(Sort-MergeChaptersDefault -Chapters @($chapters))
 
     }
 

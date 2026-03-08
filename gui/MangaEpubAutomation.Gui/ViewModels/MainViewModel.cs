@@ -98,7 +98,7 @@ public partial class MainViewModel : ObservableObject
         InitDependenciesFromTemplateCommand = new RelayCommand(InitDepsFromTemplate);
         OpenMangaJaNaiRepoCommand = new RelayCommand(() => OpenUrl("https://github.com/the-database/MangaJaNaiConverterGui"));
         OpenKccRepoCommand = new RelayCommand(() => OpenUrl("https://github.com/ciromattia/kcc"));
-        OpenCopyMangaDownloaderRepoCommand = new RelayCommand(() => OpenUrl("https://github.com/misaka10843/copymanga-downloader"));
+        OpenCopyMangaDownloaderRepoCommand = new RelayCommand(() => OpenUrl("https://github.com/lanyeeee/copymanga-downloader"));
 
         LoadPipelineConfigCommand = new RelayCommand(LoadPipelineConfigFromFile);
         SavePipelineConfigCommand = new RelayCommand(SavePipelineConfigFromForm);
@@ -117,6 +117,8 @@ public partial class MainViewModel : ObservableObject
         LoadLatestPlanCommand = new RelayCommand(LoadLatestPlanPreview);
         LoadLatestResultCommand = new RelayCommand(LoadLatestResultPreview);
         Loc.PropertyChanged += OnLocalizationChanged;
+
+        InitializeEpubPipelineFeatures();
 
         if (File.Exists(DepsConfigPath)) LoadDependenciesFromFile();
         if (File.Exists(ConfigPath)) LoadPipelineConfigFromFile();
@@ -277,6 +279,7 @@ public partial class MainViewModel : ObservableObject
         ExecuteRunCommand.NotifyCanExecuteChanged();
         CancelRunCommand.NotifyCanExecuteChanged();
         GenerateMergeOrderTemplateCommand.NotifyCanExecuteChanged();
+        NotifyEpubPipelineCanExecuteChanged();
     }
 
     partial void OnSelectedMergeOrderEntryChanged(string? value)
