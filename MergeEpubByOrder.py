@@ -91,6 +91,60 @@ def _safe_id(raw: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]", "_", raw) or "id"
 
 
+def _media_type_from_href(href: str) -> Optional[str]:
+    """Infer media type from href extension when possible."""
+    ext = Path(href).suffix.lower()
+    if ext in {".jpg", ".jpeg"}:
+        return "image/jpeg"
+    if ext == ".png":
+        return "image/png"
+    if ext == ".gif":
+        return "image/gif"
+    if ext == ".webp":
+        return "image/webp"
+    if ext == ".avif":
+        return "image/avif"
+    if ext == ".svg":
+        return "image/svg+xml"
+    if ext in {".xhtml", ".html", ".htm"}:
+        return "application/xhtml+xml"
+    if ext == ".ncx":
+        return "application/x-dtbncx+xml"
+    if ext == ".css":
+        return "text/css"
+    if ext == ".otf":
+        return "font/otf"
+    if ext == ".ttf":
+        return "font/ttf"
+    if ext == ".woff":
+        return "font/woff"
+    if ext == ".woff2":
+        return "font/woff2"
+    if ext == ".js":
+        return "text/javascript"
+    return None
+
+
+def _normalize_media_type(href: str, declared: str) -> str:
+    """Normalize invalid/ambiguous media-type declarations by href extension."""
+    inferred = _media_type_from_href(href)
+    if inferred:
+        return inferred
+    media_type = (declared or "").strip()
+    return media_type or "application/octet-stream"
+
+
+def _ensure_unique_id(base_id: str, used_ids: set[str]) -> str:
+    """Make sure OPF manifest ids are unique."""
+    candidate = base_id
+    seq = 2
+    while candidate in used_ids:
+        candidate = f"{base_id}_{seq}"
+        seq += 1
+    used_ids.add(candidate)
+    return candidate
+
+
 def _first_existing_href(old_to_new_href: Dict[str, str], keys: List[str]) -> Optional[str]:
     """Return the first mapped href from candidate keys."""
     for key in keys:
@@ -102,7 +156,7 @@ def _first_existing_href(old_to_new_href: Dict[str, str], keys: List[str]) -> Op
 def _load_plan(path: str) -> MergePlan:
     # Plan json is produced by the PowerShell pipeline and defines
     # both ordering and metadata for the merged anthology.
-    with open(path, "r", encoding="utf-8") as fp:
+    with open(path, "r", encoding="utf-8-sig") as fp:
         raw = json.load(fp)
 
     required = ["output_epub_path", "title", "author", "language", "description", "chapters"]
@@ -141,17 +195,17 @@ def _load_plan(path: str) -> MergePlan:
 
 def _write_container_xml(out: zipfile.ZipFile) -> None:
     """Write EPUB META-INF/container.xml that points to merged content.opf."""
-    container = ET.Element(_ns("container", CONT_NS), attrib={"version": "1.0"})
-    rootfiles = ET.SubElement(container, _ns("rootfiles", CONT_NS))
+    container = ET.Element("container", attrib={"version": "1.0", "xmlns": CONT_NS})
+    rootfiles = ET.SubElement(container, "rootfiles")
     ET.SubElement(
         rootfiles,
-        _ns("rootfile", CONT_NS),
+        "rootfile",
         attrib={
             "full-path": "content.opf",
             "media-type": "application/oebps-package+xml",
         },
     )
-    xml = ET.tostring(container, encoding="utf-8", xml_declaration=True)
+    xml = b'<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(container, encoding="utf-8")
     out.writestr("META-INF/container.xml", xml, compress_type=zipfile.ZIP_DEFLATED)
 
 
@@ -162,24 +216,24 @@ def _write_toc_ncx(
     navpoints: List[Tuple[str, str]],
 ) -> None:
     """Create a flat NCX table of contents from chapter navpoints."""
-    ncx = ET.Element(_ns("ncx", NCX_NS), attrib={"version": "2005-1"})
-    head = ET.SubElement(ncx, _ns("head", NCX_NS))
-    ET.SubElement(head, _ns("meta", NCX_NS), attrib={"name": "dtb:uid", "content": uid})
-    ET.SubElement(head, _ns("meta", NCX_NS), attrib={"name": "dtb:depth", "content": "1"})
-    ET.SubElement(head, _ns("meta", NCX_NS), attrib={"name": "dtb:totalPageCount", "content": "0"})
-    ET.SubElement(head, _ns("meta", NCX_NS), attrib={"name": "dtb:maxPageNumber", "content": "0"})
+    ncx = ET.Element("ncx", attrib={"version": "2005-1", "xmlns": NCX_NS})
+    head = ET.SubElement(ncx, "head")
+    ET.SubElement(head, "meta", attrib={"name": "dtb:uid", "content": uid})
+    ET.SubElement(head, "meta", attrib={"name": "dtb:depth", "content": "1"})
+    ET.SubElement(head, "meta", attrib={"name": "dtb:totalPageCount", "content": "0"})
+    ET.SubElement(head, "meta", attrib={"name": "dtb:maxPageNumber", "content": "0"})
 
-    doc_title = ET.SubElement(ncx, _ns("docTitle", NCX_NS))
-    ET.SubElement(doc_title, _ns("text", NCX_NS)).text = title
+    doc_title = ET.SubElement(ncx, "docTitle")
+    ET.SubElement(doc_title, "text").text = title
 
-    nav_map = ET.SubElement(ncx, _ns("navMap", NCX_NS))
+    nav_map = ET.SubElement(ncx, "navMap")
     for idx, (name, href) in enumerate(navpoints, start=1):
-        nav = ET.SubElement(nav_map, _ns("navPoint", NCX_NS), attrib={"id": f"book{idx:03d}", "playOrder": str(idx)})
-        nav_label = ET.SubElement(nav, _ns("navLabel", NCX_NS))
-        ET.SubElement(nav_label, _ns("text", NCX_NS)).text = name
-        ET.SubElement(nav, _ns("content", NCX_NS), attrib={"src": href})
+        nav = ET.SubElement(nav_map, "navPoint", attrib={"id": f"book{idx:03d}", "playOrder": str(idx)})
+        nav_label = ET.SubElement(nav, "navLabel")
+        ET.SubElement(nav_label, "text").text = name
+        ET.SubElement(nav, "content", attrib={"src": href})
 
-    xml = ET.tostring(ncx, encoding="utf-8", xml_declaration=True)
+    xml = b'<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(ncx, encoding="utf-8")
     out.writestr("toc.ncx", xml, compress_type=zipfile.ZIP_DEFLATED)
 
 
@@ -193,63 +247,57 @@ def _write_content_opf(
 ) -> None:
     """Write merged OPF metadata, manifest, spine, and optional cover guide."""
     package = ET.Element(
-        _ns("package", OPF_NS),
+        "package",
         attrib={
             "version": "2.0",
+            "xmlns": OPF_NS,
             "unique-identifier": "mjnai-merge-id",
         },
     )
 
     metadata = ET.SubElement(
         package,
-        _ns("metadata", OPF_NS),
+        "metadata",
         attrib={
-            _ns("dc", "http://www.w3.org/2000/xmlns/"): DC_NS,
-            _ns("opf", "http://www.w3.org/2000/xmlns/"): OPF_NS,
+            "xmlns:dc": DC_NS,
+            "xmlns:opf": OPF_NS,
         },
     )
-    ET.SubElement(metadata, _ns("identifier", DC_NS), attrib={"id": "mjnai-merge-id"}).text = uid
-    ET.SubElement(metadata, _ns("title", DC_NS)).text = plan.title
+    ET.SubElement(metadata, "dc:identifier", attrib={"id": "mjnai-merge-id"}).text = uid
+    ET.SubElement(metadata, "dc:title").text = plan.title
     ET.SubElement(
         metadata,
-        _ns("creator", DC_NS),
-        attrib={_ns("role", OPF_NS): "aut", _ns("file-as", OPF_NS): plan.author},
+        "dc:creator",
+        attrib={"opf:role": "aut", "opf:file-as": plan.author},
     ).text = plan.author
-    ET.SubElement(metadata, _ns("language", DC_NS)).text = plan.language
-    ET.SubElement(metadata, _ns("description", DC_NS)).text = plan.description
-    ET.SubElement(metadata, _ns("contributor", DC_NS)).text = plan.contributor
+    ET.SubElement(metadata, "dc:language").text = plan.language
+    ET.SubElement(metadata, "dc:description").text = plan.description
+    ET.SubElement(metadata, "dc:contributor").text = plan.contributor
 
     if cover_image_href:
-        ET.SubElement(metadata, _ns("meta", OPF_NS), attrib={"name": "cover", "content": "coverimageid"})
+        ET.SubElement(metadata, "meta", attrib={"name": "cover", "content": "coverimageid"})
 
-    manifest = ET.SubElement(package, _ns("manifest", OPF_NS))
+    manifest = ET.SubElement(package, "manifest")
     if cover_image_href:
-        media = "image/jpeg"
-        ext = Path(cover_image_href).suffix.lower()
-        if ext == ".png":
-            media = "image/png"
-        elif ext == ".gif":
-            media = "image/gif"
-        elif ext == ".webp":
-            media = "image/webp"
-        ET.SubElement(manifest, _ns("item", OPF_NS), attrib={"id": "coverimageid", "href": cover_image_href, "media-type": media})
-        ET.SubElement(manifest, _ns("item", OPF_NS), attrib={"id": "cover", "href": "cover.xhtml", "media-type": "application/xhtml+xml"})
-    ET.SubElement(manifest, _ns("item", OPF_NS), attrib={"id": "ncx", "href": "toc.ncx", "media-type": "application/x-dtbncx+xml"})
+        media = _media_type_from_href(cover_image_href) or "image/jpeg"
+        ET.SubElement(manifest, "item", attrib={"id": "coverimageid", "href": cover_image_href, "media-type": media})
+        ET.SubElement(manifest, "item", attrib={"id": "cover", "href": "cover.xhtml", "media-type": "application/xhtml+xml"})
+    ET.SubElement(manifest, "item", attrib={"id": "ncx", "href": "toc.ncx", "media-type": "application/x-dtbncx+xml"})
 
     for item_id, href, media_type in manifest_items:
-        ET.SubElement(manifest, _ns("item", OPF_NS), attrib={"id": item_id, "href": href, "media-type": media_type})
+        ET.SubElement(manifest, "item", attrib={"id": item_id, "href": href, "media-type": media_type})
 
-    spine = ET.SubElement(package, _ns("spine", OPF_NS), attrib={"toc": "ncx"})
+    spine = ET.SubElement(package, "spine", attrib={"toc": "ncx"})
     if cover_image_href:
-        ET.SubElement(spine, _ns("itemref", OPF_NS), attrib={"idref": "cover", "linear": "yes"})
+        ET.SubElement(spine, "itemref", attrib={"idref": "cover", "linear": "yes"})
     for sid in spine_ids:
-        ET.SubElement(spine, _ns("itemref", OPF_NS), attrib={"idref": sid, "linear": "yes"})
+        ET.SubElement(spine, "itemref", attrib={"idref": sid, "linear": "yes"})
 
     if cover_image_href:
-        guide = ET.SubElement(package, _ns("guide", OPF_NS))
-        ET.SubElement(guide, _ns("reference", OPF_NS), attrib={"type": "cover", "title": "Cover", "href": "cover.xhtml"})
+        guide = ET.SubElement(package, "guide")
+        ET.SubElement(guide, "reference", attrib={"type": "cover", "title": "Cover", "href": "cover.xhtml"})
 
-    xml = ET.tostring(package, encoding="utf-8", xml_declaration=True)
+    xml = b'<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(package, encoding="utf-8")
     out.writestr("content.opf", xml, compress_type=zipfile.ZIP_DEFLATED)
 
 
@@ -279,6 +327,8 @@ def merge(plan: MergePlan) -> None:
     spine_ids: List[str] = []
     navpoints: List[Tuple[str, str]] = []
     seen_hrefs = set()
+    seen_manifest_hrefs: Dict[str, str] = {}
+    used_manifest_ids: set[str] = {"ncx", "cover", "coverimageid"}
 
     cover_href: Optional[str] = None
     uid = f"urn:uuid:{uuid.uuid4()}"
@@ -341,6 +391,7 @@ def merge(plan: MergePlan) -> None:
 
                         src_name = _norm(posixpath.join(root_dir, href))
                         dst_name = _norm(chapter_prefix + src_name)
+                        normalized_media_type = _normalize_media_type(dst_name, media_type)
 
                         try:
                             blob = src.read(src_name)
@@ -352,10 +403,27 @@ def merge(plan: MergePlan) -> None:
                             out.writestr(dst_name, blob, compress_type=zipfile.ZIP_DEFLATED)
                             seen_hrefs.add(dst_name)
 
-                        new_id = f"c{chapter_index}_{_safe_id(old_id or Path(href).stem)}"
-                        old_to_new_id[old_id] = new_id
-                        old_to_new_href[old_id] = dst_name
-                        manifest_items.append((new_id, dst_name, media_type))
+                        is_source_cover = bool(source_cover_id) and old_id == source_cover_id
+                        if is_source_cover and cover_href is None:
+                            # Canonicalize source cover to top-level coverimageid item.
+                            cover_href = dst_name
+                            seen_manifest_hrefs[dst_name] = "coverimageid"
+                            if old_id:
+                                old_to_new_id[old_id] = "coverimageid"
+                                old_to_new_href[old_id] = dst_name
+                            continue
+
+                        if dst_name in seen_manifest_hrefs:
+                            new_id = seen_manifest_hrefs[dst_name]
+                        else:
+                            base_id = f"c{chapter_index}_{_safe_id(old_id or Path(href).stem)}"
+                            new_id = _ensure_unique_id(base_id, used_manifest_ids)
+                            seen_manifest_hrefs[dst_name] = new_id
+                            manifest_items.append((new_id, dst_name, normalized_media_type))
+
+                        if old_id:
+                            old_to_new_id[old_id] = new_id
+                            old_to_new_href[old_id] = dst_name
 
                     first_spine_href: Optional[str] = None
                     for itemref in spine:
@@ -390,6 +458,10 @@ def merge(plan: MergePlan) -> None:
                 spine_ids=spine_ids,
                 cover_image_href=cover_href,
             )
+            # Match epubmerge behavior: mark entries as Windows-created to
+            # avoid platform-specific permission quirks when extracted.
+            for zinfo in out.filelist:
+                zinfo.create_system = 0
 
         # Atomic replace prevents leaving a partial EPUB on failure.
         os.replace(tmp_path, out_path)
